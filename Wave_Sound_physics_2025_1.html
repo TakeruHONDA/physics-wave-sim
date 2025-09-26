@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インタラクティブ物理学習：音波の世界</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVF9PSesdBkv92Qd8udWbd40xMYvYac1pAglzq4AsozHlWsLw9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlVjOTmhYWfWBkZwPjCrRMlsMsuPOllCg5pTSRiZAkaDqkb9ZuCrKHpPaEn" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ]
+            });
+        });
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #fdfcfb;
+            color: #3f3c3a;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+        .animation-canvas {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            border: 1px solid #e7e5e4;
+        }
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(253, 252, 251, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .section-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            border: 1px solid #f3f2f1;
+        }
+        .control-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .control-button:active {
+            transform: translateY(0);
+        }
+        .formula-box {
+            background-color: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            border-left: 4px solid #14b8a6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            color: #0f766e;
+        }
+        #recorder-holes .hole {
+             width: 2rem; /* 32px */
+             height: 2rem; /* 32px */
+             border-radius: 9999px;
+             cursor: pointer;
+             transition: background-color 0.2s, border-color 0.2s;
+             border-width: 2px;
+        }
+        #piano-wrapper {
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            -webkit-overflow-scrolling: touch;
+        }
+        .piano {
+            display: flex;
+        }
+        .key {
+            border: 1px solid #333;
+            box-sizing: border-box;
+            cursor: pointer;
+            position: relative;
+        }
+        .key.white {
+            width: 50px;
+            height: 200px;
+            background-color: white;
+            margin-left: -1px;
+        }
+        .key.black {
+            width: 30px;
+            height: 120px;
+            background-color: #333;
+            margin-left: -16px;
+            margin-right: -16px;
+            z-index: 10;
+        }
+        .key.active {
+            background-color: #a0f0c0;
+        }
+        .key.selected {
+            border: 3px solid #3b82f6;
+            box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-teal-600 text-white text-center py-8">
+        <h1 class="text-4xl font-bold">インタラクティブ物理学習</h1>
+        <p class="text-xl mt-2">音波の世界を探求しよう</p>
+    </header>
+
+    <nav class="sticky-nav shadow-md">
+        <div class="max-w-5xl mx-auto px-4">
+            <div class="flex flex-wrap justify-center items-center space-x-4 md:space-x-6 py-3 text-sm md:text-base">
+                <a href="#section-properties" class="text-gray-600 hover:text-teal-600 font-semibold transition">音の性質</a>
+                <a href="#section-transmission" class="text-gray-600 hover:text-teal-600 font-semibold transition">音の伝わり方</a>
+                <a href="#section-beats" class="text-gray-600 hover:text-teal-600 font-semibold transition">うなり</a>
+                <a href="#section-doppler" class="text-gray-600 hover:text-teal-600 font-semibold transition">ドップラー効果</a>
+                <a href="#section-interference" class="text-gray-600 hover:text-teal-600 font-semibold transition">音の干渉</a>
+                <a href="#section-resonance" class="text-gray-600 hover:text-teal-600 font-semibold transition">気柱の共鳴</a>
+                <a href="#section-string-instrument" class="text-gray-600 hover:text-teal-600 font-semibold transition">弦楽器</a>
+                <a href="#section-scales" class="text-gray-600 hover:text-teal-600 font-semibold transition">音階の物理学</a>
+                <a href="#section-missing-fundamental" class="text-gray-600 hover:text-teal-600 font-semibold transition">ミッシング・ファンダメンタル</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-4 md:p-8 space-y-16">
+
+        <section id="section-properties" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">1. 音の性質（音の3要素）</h2>
+            <p class="mb-6 text-gray-700">音は「大きさ」「高さ」「音色」の3つの要素で特徴づけられます。スライダーやボタンを操作して、それぞれの要素が波形にどう影響するか、そして実際にどんな音に聞こえるかを確認してみましょう。</p>
+            <div class="chart-container mb-4">
+                <canvas id="soundWaveChart"></canvas>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div>
+                    <label for="amplitudeSlider" class="font-semibold">① 音の大きさ (振幅): <span id="amplitudeValue">0.5</span></label>
+                    <input id="amplitudeSlider" type="range" min="0.1" max="1.0" value="0.5" step="0.05" class="w-full">
+                </div>
+                <div>
+                    <label for="frequencySlider" class="font-semibold">② 音の高さ (振動数): <span id="frequencyValue">220</span> Hz</label>
+                    <input id="frequencySlider" type="range" min="110" max="880" value="220" step="10" class="w-full">
+                </div>
+                <div>
+                    <label class="font-semibold">③ 音色 (波形)</label>
+                    <div id="waveformButtons" class="flex space-x-2 mt-2">
+                        <button data-wave="sine" class="px-3 py-1 bg-teal-500 text-white rounded control-button text-sm">正弦波</button>
+                        <button data-wave="square" class="px-3 py-1 bg-gray-400 text-white rounded control-button text-sm">矩形波</button>
+                        <button data-wave="sawtooth" class="px-3 py-1 bg-gray-400 text-white rounded control-button text-sm">のこぎり波</button>
+                    </div>
+                </div>
+            </div>
+             <div class="text-center">
+                <button id="playSoundBtn" class="px-6 py-2 bg-teal-500 text-white rounded-lg control-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.88 5.88a15 15 0 0121.213 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    音を再生 / 停止
+                </button>
+                <p class="text-sm text-gray-500 mt-2">スピーカーの音量にご注意ください</p>
+            </div>
+        </section>
+
+        <section id="section-transmission" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">2. 音の伝わり方</h2>
+            <p class="mb-6 text-gray-700">音は空気などの媒質を通して伝わる「縦波」です。ここでは、音の基本的な伝わり方と、壁などに当たって跳ね返る「反射」の様子をシミュレーションします。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-center">音波（縦波）のモデル</h3>
+                    <canvas id="longitudinalWaveCanvas" class="w-full animation-canvas" width="400" height="200"></canvas>
+                    <p class="text-sm text-gray-600 mt-2">媒質の粒子が進行方向（右）に沿って振動し、<strong class="text-teal-600">密（密度の高い部分）</strong>と<strong class="text-gray-500">疎（密度の低い部分）</strong>を作りながら伝わっていきます。</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-center">音の反射（やまびこ）</h3>
+                    <canvas id="reflectionCanvas" class="w-full animation-canvas" width="400" height="200"></canvas>
+                     <div class="mt-2">
+                        <label for="distanceSlider" class="text-sm font-semibold">壁までの距離: <span id="distanceValue">170</span> m</label>
+                        <input id="distanceSlider" type="range" min="34" max="340" value="170" step="17" class="w-full">
+                    </div>
+                    <div class="flex justify-center items-center space-x-4 mt-2">
+                         <button id="reflectionPlayBtn" class="px-4 py-2 bg-teal-500 text-white rounded-lg control-button">再生</button>
+                    </div>
+                    <div class="mt-2 p-2 bg-gray-100 rounded-lg text-center">
+                        <p>反射音が聞こえるまでの時間: <strong id="echoTime">1.00</strong> 秒</p>
+                        <p class="text-xs formula-box mt-1">時間 = (距離 × 2) / 音速 (340m/s)</p>
+                    </div>
+                </div>
+            </div>
+             <div class="mt-8">
+                 <h3 class="text-xl font-semibold mb-2 text-center">媒質による音速の違い</h3>
+                 <p class="text-center text-gray-600 mb-4">音速は、波を伝える媒質の密度や温度によって変化します。</p>
+                 <div class="overflow-x-auto">
+                    <table class="w-full max-w-md mx-auto text-center border">
+                        <thead class="bg-teal-50">
+                            <tr>
+                                <th class="p-2 border">媒質</th>
+                                <th class="p-2 border">音速 (m/s)</th>
+                                <th class="p-2 border">状態</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-2 border">空気 (0℃)</td><td class="p-2 border">約 331.5</td><td class="p-2 border">気体</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-2 border">水中 (20℃)</td><td class="p-2 border">約 1500</td><td class="p-2 border">液体</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border">鉄</td><td class="p-2 border">約 5950</td><td class="p-2 border">固体</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                 </div>
+                 <div class="mt-4 formula-box text-center">空気中の音速: $V \approx 331.5 + 0.6t$  ($t$は摂氏温度)</div>
+            </div>
+        </section>
+
+        <section id="section-beats" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">3. うなり</h2>
+            <p class="mb-6 text-gray-700">振動数がわずかに異なる2つの音を同時に鳴らすと、音が周期的に大きく聞こえたり小さく聞こえたりします。この現象が「うなり」です。スライダーで2つの音の振動数を変えて、うなりの様子を観察し、実際に聞いてみましょう。</p>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label for="freq1Slider" class="font-semibold">音源1の振動数 (f₁): <span id="freq1Value">200</span> Hz</label>
+                    <input id="freq1Slider" type="range" min="100" max="300" value="200" step="1" class="w-full">
+                </div>
+                <div>
+                    <label for="freq2Slider" class="font-semibold">音源2の振動数 (f₂): <span id="freq2Value">204</span> Hz</label>
+                    <input id="freq2Slider" type="range" min="100" max="300" value="204" step="1" class="w-full">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="chart-container">
+                    <h4 class="text-center font-semibold text-gray-600">時間変化のグラフ</h4>
+                    <canvas id="beatsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h4 class="text-center font-semibold text-gray-600">周波数解析のグラフ</h4>
+                    <canvas id="beatsFftChart"></canvas>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="formula-box text-center">
+                    <p class="text-lg">うなりの回数 (毎秒)</p>
+                    <p class="text-2xl font-bold mt-1" id="beatFrequency">4 回</p>
+                    <p class="text-lg mt-1">$$f_{beat} = |f_1 - f_2|$$</p>
+                </div>
+                 <div class="flex items-center justify-center">
+                    <button id="playBeatsBtn" class="px-6 py-2 bg-teal-500 text-white rounded-lg control-button">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.88 5.88a15 15 0 0121.213 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        うなりを再生 / 停止
+                    </button>
+                </div>
+            </div>
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold text-teal-700 mb-2 border-l-4 border-teal-500 pl-3">周波数解析とフーリエ解析</h3>
+                <p class="text-gray-700">時間変化のグラフは波の形が時間とともにどう変わるかを示しますが、その音が「どの高さの音で構成されているか」は分かりにくいです。そこで、音をその構成要素である周波数に分解して表示するのが周波数解析です。うなりのように複雑に見える波形も、数学的な手法（フーリエ解析）を用いることで、複数の単純な正弦波の重ね合わせとして分析できます。周波数解析のグラフでは、横軸が周波数（音の高さ）、縦軸がその周波数の音の強さ（パワー）を表します。うなりの場合、2つの音源の周波数 $f_1$ と $f_2$ の位置に、はっきりとした2本のピークが見えるはずです。</p>
+                <div class="formula-box mt-4">
+                    <h4 class="font-bold text-center">フーリエ級数展開</h4>
+                    <p class="text-center text-lg mt-2">$$f(t) = \frac{a_0}{2} + \sum_{n=1}^{\infty} (a_n \cos(n\omega t) + b_n \sin(n\omega t))$$</p>
+                    <p class="text-sm mt-4">
+                        この式は、どんな周期的な波 $f(t)$ も、基本角周波数 $\omega$ の整数倍の周波数を持つ単純なサイン波とコサイン波の和で表現できることを示しています。フーリエ係数 $a_n, b_n$ は各周波数成分の強さを表します。
+                    </p>
+                </div>
+            </div>
+             <div class="mt-8">
+                <h3 class="text-xl font-semibold text-teal-700 mb-2 border-l-4 border-teal-500 pl-3">なぜ、うなりの周波数はグラフに現れないのか？</h3>
+                <p class="text-gray-700">周波数解析のグラフにうなりの周波数（$f_{beat}$）が現れないのは、うなりが新しい周波数の「音波」ではなく、2つの音波が干渉した結果として生じる「音の強弱の変化（振幅の変化）」の周期だからです。周波数解析のグラフが示しているのは、音を構成している「材料」となる周波数成分です。うなりの音の材料はあくまで音源1の周波数 $f_1$ と音源2の周波数 $f_2$ の2つだけなので、グラフにはこの2ヶ所にだけピークが現れます。</p>
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <h4 class="font-semibold text-lg text-gray-800">3つ以上の音（和音）のうなり</h4>
+                    <p class="text-gray-700 mt-2">では、3つ以上の音（例えば、和音）を同時に鳴らした場合はどうなるのでしょうか。この場合、うなりはそれぞれの音のペアの間で発生します。3つの周波数 $f_1, f_2, f_3$ がある場合、うなりは $|f_1 - f_2|$、 $|f_1 - f_3|$、そして $|f_2 - f_3|$ の3種類の周期で同時に発生します。これにより、音の強弱の変化は非常に複雑になり、単純な「ウォンウォン」という響きではなくなります。これが、周波数比が複雑な和音が「濁って」聞こえる、つまり不協和音となる物理的な理由の一つです。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-doppler" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">4. ドップラー効果</h2>
+            <p class="mb-6 text-gray-700">救急車が近づくときと遠ざかるときでサイレンの音が変わって聞こえるのはドップラー効果のためです。音源や観測者が動くことで、観測される波長が変化し、結果として振動数（音の高さ）が変わります。下のシミュレーションで、音源の動きと観測される波長・振動数の変化を、公式と照らし合わせて確認しましょう。</p>
+            <div class="relative w-full max-w-lg mx-auto">
+                <canvas id="dopplerCanvas" class="w-full animation-canvas" height="300"></canvas>
+                <div class="absolute top-1/2 -translate-y-1/2 left-4 text-center">
+                    <div class="text-2xl">👂</div>
+                    <p class="text-xs font-bold">観測者A</p>
+                </div>
+                 <div class="absolute top-1/2 -translate-y-1/2 right-4 text-center">
+                    <div class="text-2xl">👂</div>
+                    <p class="text-xs font-bold">観測者B</p>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <button id="dopplerStartBtn" class="px-6 py-3 bg-teal-500 text-white rounded-lg control-button text-lg">シミュレーション開始</button>
+            </div>
+             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                <div>
+                    <label class="font-semibold">音の再生</label>
+                    <div id="dopplerSoundButtons" class="flex justify-center space-x-2 mt-2">
+                        <button data-sound="off" class="px-4 py-2 bg-teal-500 text-white rounded control-button">OFF</button>
+                        <button data-sound="on" class="px-4 py-2 bg-gray-400 text-white rounded control-button">ON</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="font-semibold">観測場所</label>
+                    <div id="dopplerObserverButtons" class="flex justify-center space-x-2 mt-2 text-sm">
+                        <button data-observer="A" class="px-3 py-2 bg-gray-400 text-white rounded control-button">観測者A</button>
+                        <button data-observer="B" class="px-3 py-2 bg-teal-500 text-white rounded control-button">観測者B</button>
+                        <button data-observer="ambulance" class="px-3 py-2 bg-gray-400 text-white rounded control-button">救急車</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 p-4 bg-gray-100 rounded-lg text-sm text-gray-700">
+                <p class="text-center">設定値： 音速($V$): 340 m/s | 音源の速さ($v_s$): 34 m/s | 音源の振動数($f$): 440 Hz</p>
+                <div id="doppler-explanation" class="mt-2 text-center">
+                    <p>音源が右へ動くと、進行方向（右）では<strong class="text-red-500">波長が圧縮されて短く</strong>なり、後方（左）では<strong class="text-blue-500">波長が引き伸ばされて長く</strong>なります。</p>
+                </div>
+            </div>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="formula-box">
+                    <h4 class="font-bold text-center">音源が近づく場合 (観測者B)</h4>
+                    <p class="text-center text-lg mt-2">$$f' = \frac{V}{V - v_s} f$$</p>
+                    <p class="text-center mt-2">観測される振動数:<br><strong id="freqRight" class="text-xl">--- Hz</strong> (音が高くなる)</p>
+                </div>
+                 <div class="formula-box">
+                    <h4 class="font-bold text-center">音源が遠ざかる場合 (観測者A)</h4>
+                    <p class="text-center text-lg mt-2">$$f' = \frac{V}{V + v_s} f$$</p>
+                    <p class="text-center mt-2">観測される振動数:<br><strong id="freqLeft" class="text-xl">--- Hz</strong> (音が低くなる)</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-interference" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">5. 音の強め合いと弱め合い（干渉）</h2>
+            <p class="mb-6 text-gray-700">2つの音源から出た波が重なると、場所によって音が大きく聞こえたり、小さく聞こえたりする現象が起こります。これを音波の「干渉」と呼びます。アニメーションでは、波の山と山が重なって強め合う場所が、赤い双曲線として表示されます。</p>
+            <div class="grid md:grid-cols-3 gap-8 items-center">
+                <div class="md:col-span-2">
+                    <canvas id="interferenceCanvas" class="w-full animation-canvas" width="500" height="400"></canvas>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="phaseSlider" class="font-semibold">音源2の位相差: <span id="phaseValue">0</span>°</label>
+                        <input id="phaseSlider" type="range" min="0" max="360" value="0" step="15" class="w-full">
+                        <p class="text-sm text-gray-600 mt-2">位相を変化させると、強め合う場所（双曲線）が移動する様子を確認できます。</p>
+                    </div>
+                    <div class="formula-box">
+                        <h4 class="font-bold text-center">強め合いの条件</h4>
+                        <p class="text-center mt-2">$|l_1 - l_2| = m\lambda$</p>
+                    </div>
+                    <div class="formula-box">
+                        <h4 class="font-bold text-center">弱め合いの条件</h4>
+                        <p class="text-center mt-2">$|l_1 - l_2| = (m + \frac{1}{2})\lambda$</p>
+                    </div>
+                    <p class="text-xs text-gray-500">$l_1, l_2$: 各音源からの距離, $m$: 整数, $\lambda$: 波長</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-resonance" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">6. 気柱の共鳴</h2>
+            <p class="mb-6 text-gray-700">管の中の空気（気柱）は、特定の振動数の音と共鳴して大きな定常波を作ります。これにより、管楽器は特定の高さの音を出すことができます。共鳴の条件は、管の両端が開いている「開管」か、一端が閉じている「閉管」かによって異なります。</p>
+            
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <!-- Left side: Interactive Canvas -->
+                <div>
+                    <canvas id="resonanceCanvas" class="w-full animation-canvas" width="400" height="200"></canvas>
+                    <div class="mt-4 flex justify-center space-x-4">
+                        <button id="openPipeBtn" class="px-4 py-2 bg-teal-500 text-white rounded-lg control-button">開管</button>
+                        <button id="closedPipeBtn" class="px-4 py-2 bg-gray-400 text-white rounded-lg control-button">閉管</button>
+                    </div>
+                    <div class="mt-4">
+                        <label for="modeSlider" class="font-semibold">振動モード (n): <span id="modeValue">1</span></label>
+                        <input id="modeSlider" type="range" min="1" max="5" value="1" step="1" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Right side: Formulas and explanation -->
+                <div id="resonanceFormulas" class="text-center md:text-left">
+                    <!-- Content will be dynamically generated by JS -->
+                </div>
+            </div>
+
+            <div class="mt-12">
+                <h3 class="text-2xl font-semibold text-teal-700 mb-3 border-l-4 border-teal-500 pl-3">開口端補正について</h3>
+                <p class="text-gray-700 mb-4">実際の管楽器では、定常波の腹（振幅が最大になる点）は、管の開いた端（開口端）の正確な位置ではなく、少し外側にはみ出した位置に形成されます。そのため、音波にとっての管の有効な長さは、物理的な管の長さ $L$ よりも少し長くなります。この補正量を<strong class="text-teal-600">開口端補正</strong> $\Delta L$ と呼びます。</p>
+                <div class="formula-box">
+                    <p>開口端補正 $\Delta L$ は、管の半径を $r$ とすると、およそ $\Delta L \approx 0.6r$ で与えられます。</p>
+                    <p class="mt-2">これを含めると、共鳴する周波数の計算式は以下のように補正されます。</p>
+                    <p class="mt-2 text-center">閉管: $f_n = n \frac{V}{4(L + \Delta L)}$ <span class="text-sm">(n=1, 3, 5...)</span></p>
+                    <p class="mt-2 text-center">開管: $f_n = n \frac{V}{2(L + 2\Delta L)}$ <span class="text-sm">(n=1, 2, 3...)</span></p>
+                </div>
+            </div>
+
+            <!-- Recorder Example -->
+            <div class="mt-12">
+                <h3 class="text-2xl font-semibold text-teal-700 mb-3 border-l-4 border-teal-500 pl-3">応用例：縦笛の仕組みを体験する</h3>
+                <p class="text-gray-700 mb-4">リコーダーなどの楽器は開管の共鳴を利用しています。指で穴をふさぐことで管の有効長 $L$ を変え、音の高さを変えます。また、息の強さを変える（倍音を出す）ことでも高い音を出せます。下のモデルで試してみましょう。</p>
+                
+                <div class="grid md:grid-cols-3 gap-6 items-center p-4 bg-gray-50 rounded-lg">
+                    <!-- Recorder Visual -->
+                    <div class="md:col-span-1 flex justify-center items-center">
+                        <div id="recorder" class="relative bg-amber-200 w-16 h-96 rounded-lg shadow-inner">
+                            <div class="absolute bg-amber-300 w-full h-8 top-0 rounded-t-lg"></div>
+                            <div id="recorder-holes" class="absolute top-12 left-1/2 -translate-x-1/2 space-y-4">
+                                <!-- Finger holes will be generated here by JS -->
+                            </div>
+                            <canvas id="recorderCanvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                        </div>
+                    </div>
+                    <!-- Controls -->
+                    <div class="md:col-span-2 text-center">
+                        <div class="mb-4">
+                            <p class="text-lg">現在の音</p>
+                            <p class="text-4xl font-bold text-teal-600" id="recorderNoteDisplay">--</p>
+                            <div class="flex justify-center space-x-6 text-gray-600 mt-1">
+                                <p id="recorderFreqDisplay">振動数: --- Hz</p>
+                                <p id="recorderWavelengthDisplay">波長: --- m</p>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <label class="font-semibold">振動モード</label>
+                            <div id="recorderModeButtons" class="flex justify-center space-x-2 mt-2">
+                                <button data-mode="1" class="px-4 py-2 bg-teal-500 text-white rounded control-button">基本振動 (x1)</button>
+                                <button data-mode="2" class="px-4 py-2 bg-gray-400 text-white rounded control-button">2倍振動 (x2)</button>
+                            </div>
+                        </div>
+                        <button id="playRecorderBtn" class="px-8 py-3 bg-rose-500 text-white rounded-lg control-button text-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-13c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"></path></svg>
+                            音を鳴らす
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-string-instrument" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">7. 応用例：弦楽器の仕組みを体験する</h2>
+            <p class="mb-6 text-gray-700">ギターやバイオリンなどの弦楽器は、弦の振動を利用して音を出します。音の高さは「弦の長さ」「張力（弦を張る強さ）」「線密度（弦の太さや材質）」によって決まります。これらの要素が音の高さにどう影響するか、シミュレーションで確かめてみましょう。</p>
+            
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <!-- Left side: Interactive Canvas -->
+                <div>
+                    <canvas id="stringInstrumentCanvas" class="w-full animation-canvas" width="400" height="200"></canvas>
+                    <div class="text-center mt-4">
+                        <button id="pluckStringBtn" class="px-8 py-3 bg-indigo-500 text-white rounded-lg control-button text-lg">
+                            弦を弾く
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right side: Formulas and explanation -->
+                <div class="space-y-4">
+                     <div>
+                        <label for="stringBaseNoteSelector" class="font-semibold">開放弦の音 (基準)</label>
+                        <select id="stringBaseNoteSelector" class="w-full p-2 border rounded bg-white mt-1">
+                            <option value="C">C (ド)</option>
+                            <option value="C#">C# (ド#)</option>
+                            <option value="D">D (レ)</option>
+                            <option value="D#">D# (レ#)</option>
+                            <option value="E" selected>E (ミ)</option>
+                            <option value="F">F (ファ)</option>
+                            <option value="F#">F# (ファ#)</option>
+                            <option value="G">G (ソ)</option>
+                            <option value="G#">G# (ソ#)</option>
+                            <option value="A">A (ラ)</option>
+                            <option value="A#">A# (ラ#)</option>
+                            <option value="B">B (シ)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="stringFretSlider" class="font-semibold">フレット位置: <span id="stringFretValue">開放弦 (E)</span></label>
+                        <input id="stringFretSlider" type="range" min="0" max="12" value="0" step="1" class="w-full">
+                        <p class="text-sm text-gray-500 mt-1">計算された弦長 ($L$): <span id="stringLengthDisplay">0.800</span> m</p>
+                    </div>
+                    <div>
+                        <label for="stringTensionSlider" class="font-semibold">張力 ($T$): <span id="stringTensionValue">80</span> N</label>
+                        <input id="stringTensionSlider" type="range" min="40" max="160" value="80" step="2" class="w-full">
+                    </div>
+                    <div>
+                        <label for="stringDensitySlider" class="font-semibold">線密度 ($\mu$): <span id="stringDensityValue">0.5</span> g/m</label>
+                        <input id="stringDensitySlider" type="range" min="0.1" max="2.0" value="0.5" step="0.05" class="w-full">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 bg-gray-100 rounded-lg text-center">
+                    <p class="text-lg font-semibold">計算された振動数</p>
+                    <p class="text-3xl font-bold text-indigo-600" id="stringFreqDisplay">--- Hz</p>
+                    <p class="text-gray-500" id="stringWaveSpeedDisplay">波の速さ: --- m/s</p>
+                </div>
+                <div class="formula-box">
+                    <h4 class="font-bold text-center">弦の基本振動数</h4>
+                    <p class="text-center text-lg mt-2">$$f = \frac{1}{2L}\sqrt{\frac{T}{\mu}}$$</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-scales" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">8. 音階の物理学</h2>
+            <p class="mb-6 text-gray-700">私たちが普段聞いている「ドレミファソラシド」といった音階は、物理学的な法則に基づいています。音が心地よく聞こえたり、不快に聞こえたりするのには、その音の周波数の関係が大きく関わっています。</p>
+            
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">インタラクティブピアノ</h3>
+                    <div class="mb-4">
+                        <label for="chord-selector" class="font-semibold">和音の例を選択:</label>
+                        <select id="chord-selector" class="w-full p-2 border rounded bg-white mt-1">
+                            <option value="">和音を選択...</option>
+                            <optgroup label="基本的な協和音">
+                                <option value="C4,E4,G4">C Major (ドミソ)</option>
+                                <option value="F3,A3,C4">F Major (ファラド)</option>
+                                <option value="G3,B3,D4">G Major (ソシレ)</option>
+                                <option value="A3,C4,E4">A minor (ラドミ)</option>
+                                <option value="C4,D#4,G4">C minor (ド・ミ♭・ソ)</option>
+                            </optgroup>
+                            <optgroup label="発展的な和音">
+                                <option value="C4,E4,G4,B4">C Major 7th (ドミソシ)</option>
+                                <option value="A3,C4,E4,G4">A minor 7th (ラドミソ)</option>
+                                <option value="G3,B3,D4,F4">G Dominant 7th (ソシレファ)</option>
+                                <option value="C4,E4,G4,A4">C Major 6th (ドミソラ)</option>
+                                <option value="C4,D#4,G4,A#4">C minor 6th (ドミ♭ソラ#)</option>
+                            </optgroup>
+                            <optgroup label="特殊・不協和音">
+                                <option value="C4,F4,G4">C suspended 4th (ドファソ)</option>
+                                <option value="C4,E4,G4,D5">C add 9 (ドミソレ)</option>
+                                <option value="C4,E4,G#4">C Augmented (ドミソ#)</option>
+                                <option value="C4,D#4,F#4">C Diminished (ドミ♭ソ♭)</option>
+                                <option value="C4,C#4">不協和音の例 (ド, ド#)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div id="piano-wrapper">
+                      <div id="piano-container" class="piano my-4"></div>
+                    </div>
+                    <div class="flex justify-center space-x-4 mb-4">
+                        <button id="playChordBtn" class="px-6 py-2 bg-teal-500 text-white rounded-lg control-button">和音を再生</button>
+                        <button id="clearSelectionBtn" class="px-6 py-2 bg-gray-400 text-white rounded-lg control-button">選択をクリア</button>
+                    </div>
+                    <div id="note-info" class="p-4 bg-gray-100 rounded-lg text-center">
+                        <p class="text-lg">鍵盤を複数選択するか、例から選んで和音を確かめよう</p>
+                        <p id="piano-note-display" class="text-2xl font-bold text-teal-600">-</p>
+                        <p id="piano-freq-display" class="text-sm">周波数: --- Hz</p>
+                        <p id="piano-ratio-display" class="text-sm">基準音からの周波数比: -</p>
+                        <p id="piano-integer-ratio-display" class="text-sm font-semibold">単純な整数比: -</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-lg text-teal-800">ピアノの鍵盤と音名</h4>
+                        <p>ピアノの鍵盤には「C4」や「A3」といった名前がついています。アルファベットが音階（C=ド, D=レ...）を、数字がオクターブの高さを表します。中央の「ド」が「C4」で、数字が1つ増えると1オクターブ高くなります。標準的な88鍵ピアノは、A0からC8までの広い音域をカバーします。このシミュレーションでは、C3からC6までの3オクターブを体験できます。</p>
+                    </div>
+                    <div class="formula-box">
+                        <h4 class="font-bold">十二平均律と純正律</h4>
+                        <p>現在の音楽で広く使われる<strong class="text-teal-600">十二平均律</strong>は、1オクターブを数学的に均等な12個の音（半音）に分割する方法です。隣り合う半音の周波数比は常に一定で $2^{\frac{1}{12}}$ となります。これによりどの調でも同じように演奏できる利便性がありますが、和音の響きは完全な整数比からわずかにずれます。</p>
+                         <p class="mt-2">一方、<strong class="text-teal-600">純正律</strong>は、周波数比が「4:5:6」のような単純な整数比になるように音階を定めます。特定の調（キー）で演奏された和音は非常に美しく響きますが、他の調に移調すると響きが濁ってしまうという弱点があります。</p>
+                    </div>
+                     <div>
+                        <h4 class="font-semibold text-lg text-teal-800">協和音と不協和音の定義</h4>
+                        <p><strong class="text-teal-700">協和音</strong>とは、同時に鳴らしたときに、心地よく、安定して響き合うと感じられる音の組み合わせのことです。物理的には、それぞれの音の基本周波数が「1:2」や「2:3」のような、ごく単純な整数の比になっていることが特徴です。この単純な比率のため、音の波形が周期的にきれいに重なり合い、私たちの耳には澄んだ響きとして認識されます。</p>
+                        <p class="mt-2"><strong class="text-rose-700">不協和音</strong>とは、同時に鳴らすと音がぶつかり合っているように聞こえたり、不安定で緊張感があるように感じられたりする音の組み合わせです。これは、周波数比が「15:16」のような複雑な比率になるため、波が干渉して「うなり」に近い現象が起こるからです。音楽では、あえて不協和音を使うことで緊張感を生み出し、その後の協和音をより美しく聞かせる効果があります。</p>
+                        <p class="text-gray-700 mt-4 bg-gray-100 p-3 rounded-lg">
+                        <a href="#section-beats" class="text-teal-600 hover:underline font-semibold">「3. うなり」</a>のシミュレーションで2つの周波数を様々に近づけたり離したりしながら、協和音と不協和音の響きの違いを確かめてみてください。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-missing-fundamental" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">9. 発展：ミッシング・ファンダメンタル</h2>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div>
+                    <h3 class="text-xl font-semibold text-teal-800 mb-2">倍音の合成実験</h3>
+                    <p class="mb-4 text-gray-700">楽器の「音色」は、基本となる音（基音）とその整数倍の周波数を持つ「倍音」の組み合わせで決まります。ここでは、基音を鳴らさずに倍音だけを鳴らすことで、脳が「聞こえるはずのない音」を知覚する不思議な現象を体験できます。</p>
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div>
+                             <label for="fundamentalSlider" class="font-semibold">基音の周波数 (f₀): <span id="fundamentalValue">150</span> Hz</label>
+                             <input id="fundamentalSlider" type="range" min="100" max="200" value="150" step="1" class="w-full">
+                        </div>
+                        <div class="mt-4">
+                            <p class="font-semibold">再生する倍音を選択:</p>
+                            <div id="harmonicsCheckboxes" class="grid grid-cols-3 gap-2 mt-2">
+                                <label><input type="checkbox" value="2"> 2倍音 (<span class="f2">300</span> Hz)</label>
+                                <label><input type="checkbox" value="3" checked> 3倍音 (<span class="f3">450</span> Hz)</label>
+                                <label><input type="checkbox" value="4" checked> 4倍音 (<span class="f4">600</span> Hz)</label>
+                                <label><input type="checkbox" value="5" checked> 5倍音 (<span class="f5">750</span> Hz)</label>
+                                <label><input type="checkbox" value="6"> 6倍音 (<span class="f6">900</span> Hz)</label>
+                            </div>
+                        </div>
+                        <div class="flex justify-center space-x-4 mt-6">
+                            <button id="playHarmonicsBtn" class="px-6 py-2 bg-teal-500 text-white rounded-lg control-button">倍音を再生</button>
+                            <button id="playFundamentalBtn" class="px-6 py-2 bg-gray-400 text-white rounded-lg control-button">基音を再生</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-teal-800 mb-2">体験方法</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>まず、「倍音を再生」ボタンを押して、選択された倍音（基音は含まれていない）の音を聞きます。このとき、全体として聞こえる音の「低さ」を覚えておいてください。</li>
+                        <li>次に、「基音を再生」ボタンを押して、基音だけの音を聞きます。</li>
+                        <li>多くの人の脳は、倍音だけを聞いたときに、鳴っていないはずの基音の高さを「補完」して知覚します。ステップ1で感じた音の低さが、ステップ2の基音の低さとほぼ同じに聞こえれば、ミッシング・ファンダメンタルを体験できたことになります。</li>
+                    </ol>
+                    <p class="text-sm text-gray-600 mt-4">この現象は、スマートフォンなどの小さなスピーカーが物理的に再生できない低い音でも、その倍音成分を再生することで、私たちが豊かな低音を感じられるようにする技術にも応用されています。</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-6 bg-gray-100 mt-16">
+        <p class="text-gray-500">インタラクティブ物理学習 | 音波の世界　(c)2025 Honda</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Shared variables and functions ---
+        let audioCtx;
+        
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        // Smooth scrolling for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // --- Section 1: Sound Properties ---
+        const soundWaveCanvas = document.getElementById('soundWaveChart');
+        const amplitudeSlider = document.getElementById('amplitudeSlider');
+        const frequencySlider = document.getElementById('frequencySlider');
+        const waveformButtons = document.getElementById('waveformButtons');
+        const playSoundBtn = document.getElementById('playSoundBtn');
+        const amplitudeValue = document.getElementById('amplitudeValue');
+        const frequencyValue = document.getElementById('frequencyValue');
+        
+        let soundWaveChart, oscillator, gainNode;
+        let isPlaying = false;
+        let currentWaveform = 'sine';
+
+        const soundChartConfig = {
+            type: 'line',
+            data: { labels: [], datasets: [{ data: [], borderColor: '#0d9488', borderWidth: 2, pointRadius: 0 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: { 
+                    y: { title: { display: true, text: '振幅' }, min: -1.1, max: 1.1 }, 
+                    x: { title: { display: true, text: '時間' }, ticks: { display: false } }
+                },
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                animation: { duration: 0 }
+            }
+        };
+
+        function updateSoundWaveChart() {
+            if (!soundWaveChart) {
+                soundWaveChart = new Chart(soundWaveCanvas, soundChartConfig);
+            }
+            const amplitude = parseFloat(amplitudeSlider.value);
+            const frequency = parseFloat(frequencySlider.value);
+            amplitudeValue.textContent = amplitude.toFixed(2);
+            frequencyValue.textContent = Math.round(frequency);
+            
+            const labels = [];
+            const data = [];
+            const cycles = 4;
+            const points = 200;
+            const period = 1 / frequency;
+
+            for (let i = 0; i <= points; i++) {
+                const t = (i / points) * period * cycles;
+                labels.push(t);
+                let y;
+                switch (currentWaveform) {
+                    case 'square':
+                        y = Math.sin(2 * Math.PI * frequency * t) >= 0 ? 1 : -1;
+                        break;
+                    case 'sawtooth':
+                        y = 2 * (t * frequency - Math.floor(0.5 + t * frequency));
+                        break;
+                    case 'sine':
+                    default:
+                        y = Math.sin(2 * Math.PI * frequency * t);
+                }
+                data.push(amplitude * y);
+            }
+            
+            soundWaveChart.data.labels = labels;
+            soundWaveChart.data.datasets[0].data = data;
+            soundWaveChart.options.scales.y.min = -amplitude * 1.1;
+            soundWaveChart.options.scales.y.max = amplitude * 1.1;
+            soundWaveChart.update();
+            
+            if (isPlaying && oscillator && gainNode) {
+                gainNode.gain.setValueAtTime(amplitude, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+                oscillator.type = currentWaveform;
+            }
+        }
+        
+        waveformButtons.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                currentWaveform = e.target.dataset.wave;
+                waveformButtons.querySelectorAll('button').forEach(btn => {
+                    btn.classList.replace('bg-teal-500', 'bg-gray-400');
+                });
+                e.target.classList.replace('bg-gray-400', 'bg-teal-500');
+                updateSoundWaveChart();
+            }
+        });
+
+        playSoundBtn.addEventListener('click', () => {
+            const ctx = getAudioContext();
+            if (isPlaying) {
+                oscillator.stop();
+                isPlaying = false;
+            } else {
+                oscillator = ctx.createOscillator();
+                gainNode = ctx.createGain();
+                
+                const amplitude = parseFloat(amplitudeSlider.value);
+                const frequency = parseFloat(frequencySlider.value);
+                
+                oscillator.type = currentWaveform;
+                oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+                gainNode.gain.setValueAtTime(amplitude, ctx.currentTime);
+                
+                oscillator.connect(gainNode).connect(ctx.destination);
+                oscillator.start();
+                isPlaying = true;
+            }
+        });
+
+        amplitudeSlider.addEventListener('input', updateSoundWaveChart);
+        frequencySlider.addEventListener('input', updateSoundWaveChart);
+        updateSoundWaveChart();
+
+
+        // --- Section 2: Sound Transmission ---
+        const longCanvas = document.getElementById('longitudinalWaveCanvas');
+        const lCtx = longCanvas.getContext('2d');
+        const particleColors = ['#ef4444', '#f97316', '#eab308', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'];
+        let longWaveTime = 0;
+
+        function drawLongitudinalWave() {
+            const w = longCanvas.width;
+            const h = longCanvas.height;
+            lCtx.clearRect(0, 0, w, h);
+            for (let i = 0; i < 40; i++) {
+                lCtx.fillStyle = particleColors[i % particleColors.length];
+                const baseX = w / 40 * (i + 0.5);
+                const offsetX = Math.sin(baseX * 0.1 - longWaveTime) * 15;
+                lCtx.beginPath();
+                lCtx.arc(baseX + offsetX, h / 2, 3, 0, 2 * Math.PI);
+                lCtx.fill();
+            }
+        }
+
+        const reflectionCanvas = document.getElementById('reflectionCanvas');
+        const rCtx = reflectionCanvas.getContext('2d');
+        const distanceSlider = document.getElementById('distanceSlider');
+        const distanceValue = document.getElementById('distanceValue');
+        const echoTime = document.getElementById('echoTime');
+        const reflectionPlayBtn = document.getElementById('reflectionPlayBtn');
+        let reflectionAnimFrame;
+        let waveFront, hasReflected, animationActive;
+
+        function resetReflection() {
+            cancelAnimationFrame(reflectionAnimFrame);
+            waveFront = 20;
+            hasReflected = false;
+            animationActive = false;
+            reflectionPlayBtn.disabled = false;
+            updateEchoTime();
+            drawReflection();
+        }
+        
+        function updateEchoTime() {
+            const distance = parseFloat(distanceSlider.value);
+            const time = (distance * 2) / 340;
+            distanceValue.textContent = distance;
+            echoTime.textContent = time.toFixed(2);
+        }
+
+        function drawReflection() {
+            const w = rCtx.canvas.width;
+            const h = rCtx.canvas.height;
+            const sourceX = 20;
+            const wallX = w - 20;
+            rCtx.clearRect(0, 0, w, h);
+
+            rCtx.font = '30px sans-serif';
+            rCtx.fillText('🗣️', 10, h / 2 + 10);
+            
+            rCtx.fillStyle = '#3f3c3a';
+            rCtx.fillRect(wallX, 0, 20, h);
+
+            if (!animationActive && hasReflected) {
+                rCtx.font = '20px sans-serif';
+                rCtx.fillText('👂', 15, h / 2 + 30);
+            }
+            
+            if (!animationActive) return;
+
+            if (!hasReflected) {
+                const radius = waveFront - sourceX;
+                rCtx.strokeStyle = 'rgba(13, 148, 136, 0.7)';
+                rCtx.lineWidth = 2;
+                rCtx.beginPath();
+                rCtx.arc(sourceX, h / 2, radius, -Math.PI / 2, Math.PI / 2);
+                rCtx.stroke();
+            } else {
+                const radius = wallX - waveFront;
+                rCtx.strokeStyle = 'rgba(239, 68, 68, 0.8)';
+                rCtx.lineWidth = 2;
+                rCtx.beginPath();
+                rCtx.arc(wallX, h / 2, radius, Math.PI / 2, 3 * Math.PI / 2);
+                rCtx.stroke();
+            }
+        }
+
+        function animateReflection() {
+            const distance = parseFloat(distanceSlider.value);
+            const w = rCtx.canvas.width;
+            const sourceX = 20;
+            const wallX = w - 20;
+            const canvasDistance = wallX - sourceX;
+            const speed = (canvasDistance / distance) * (340 / 60);
+
+            if (!hasReflected) {
+                waveFront += speed;
+                if (waveFront >= wallX) {
+                    waveFront = wallX;
+                    hasReflected = true;
+                }
+            } else {
+                waveFront -= speed;
+                if (waveFront <= sourceX) {
+                    waveFront = sourceX;
+                    animationActive = false;
+                    reflectionPlayBtn.disabled = false;
+                }
+            }
+            
+            drawReflection();
+
+            if (animationActive) {
+                reflectionAnimFrame = requestAnimationFrame(animateReflection);
+            }
+        }
+
+        reflectionPlayBtn.addEventListener('click', () => {
+            if (animationActive) return;
+            resetReflection();
+            animationActive = true;
+            reflectionPlayBtn.disabled = true;
+            animateReflection();
+        });
+        distanceSlider.addEventListener('input', resetReflection);
+        resetReflection();
+
+        // --- Section 3: Beats ---
+        const beatsCanvas = document.getElementById('beatsChart');
+        const beatsFftCanvas = document.getElementById('beatsFftChart');
+        const freq1Slider = document.getElementById('freq1Slider');
+        const freq2Slider = document.getElementById('freq2Slider');
+        const playBeatsBtn = document.getElementById('playBeatsBtn');
+        const freq1Value = document.getElementById('freq1Value');
+        const freq2Value = document.getElementById('freq2Value');
+        const beatFrequencyDisplay = document.getElementById('beatFrequency');
+
+        let beatsChart, beatsFftChart;
+        let isBeatsPlaying = false;
+        let osc1, osc2, beatsGain;
+        
+        const beatsChartConfig = {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: '音源1', data: [], borderColor: 'rgba(59, 130, 246, 0.5)', borderWidth: 1.5, pointRadius: 0 },
+                    { label: '音源2', data: [], borderColor: 'rgba(239, 68, 68, 0.5)', borderWidth: 1.5, pointRadius: 0 },
+                    { label: '合成波', data: [], borderColor: '#0d9488', borderWidth: 2.5, pointRadius: 0 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: { 
+                    y: { title: { display: true, text: '振幅' }, min: -2.2, max: 2.2 }, 
+                    x: { title: { display: true, text: '時間' }, ticks: { display: false } }
+                },
+                plugins: { tooltip: { enabled: false }, legend: {display: false} },
+                animation: { duration: 0 }
+            }
+        };
+
+        const beatsFftChartConfig = {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'パワー',
+                    data: [],
+                    backgroundColor: '#14b8a6',
+                    barPercentage: 1.0,
+                    categoryPercentage: 1.0
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { title: { display: true, text: 'パワー' }, min: 0, max: 1.2, ticks: { display: false } },
+                    x: { title: { display: true, text: '周波数 (Hz)' } }
+                },
+                plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                animation: { duration: 0 }
+            }
+        };
+
+        function updateBeatsChart() {
+            if (!beatsChart) {
+                beatsChart = new Chart(beatsCanvas, beatsChartConfig);
+            }
+            if (!beatsFftChart) {
+                beatsFftChart = new Chart(beatsFftCanvas, beatsFftChartConfig);
+            }
+
+            const f1 = parseFloat(freq1Slider.value);
+            const f2 = parseFloat(freq2Slider.value);
+            freq1Value.textContent = f1;
+            freq2Value.textContent = f2;
+            const beatFreq = Math.abs(f1 - f2);
+            beatFrequencyDisplay.textContent = `${beatFreq} 回`;
+
+            const labels = [], data1 = [], data2 = [], dataSum = [];
+            const duration = beatFreq > 0 ? 2 / beatFreq : 0.1;
+            const points = 500;
+            
+            for (let i = 0; i <= points; i++) {
+                const t = (i / points) * duration;
+                labels.push(t);
+                const y1 = Math.sin(2 * Math.PI * f1 * t);
+                const y2 = Math.sin(2 * Math.PI * f2 * t);
+                data1.push(y1);
+                data2.push(y2);
+                dataSum.push(y1 + y2);
+            }
+
+            beatsChart.data.labels = labels;
+            beatsChart.data.datasets[0].data = data1;
+            beatsChart.data.datasets[1].data = data2;
+            beatsChart.data.datasets[2].data = dataSum;
+            beatsChart.update();
+
+            // Update FFT Chart
+            const minFreq = 90;
+            const maxFreq = 310;
+            const fftLabels = [];
+            for(let i = minFreq; i <= maxFreq; i++) {
+                fftLabels.push(i);
+            }
+            const fftData = new Array(fftLabels.length).fill(0);
+            const f1_index = Math.round(f1) - minFreq;
+            const f2_index = Math.round(f2) - minFreq;
+            if (f1_index >= 0 && f1_index < fftData.length) {
+                fftData[f1_index] = 1;
+            }
+            if (f2_index >= 0 && f2_index < fftData.length) {
+                fftData[f2_index] = 1;
+            }
+            beatsFftChart.data.labels = fftLabels;
+            beatsFftChart.data.datasets[0].data = fftData;
+            beatsFftChart.update();
+
+
+            if (isBeatsPlaying) {
+                osc1.frequency.setValueAtTime(f1, audioCtx.currentTime);
+                osc2.frequency.setValueAtTime(f2, audioCtx.currentTime);
+            }
+        }
+
+        playBeatsBtn.addEventListener('click', () => {
+            const ctx = getAudioContext();
+            if (isBeatsPlaying) {
+                osc1.stop();
+                osc2.stop();
+                isBeatsPlaying = false;
+            } else {
+                const f1 = parseFloat(freq1Slider.value);
+                const f2 = parseFloat(freq2Slider.value);
+                
+                osc1 = ctx.createOscillator();
+                osc2 = ctx.createOscillator();
+                beatsGain = ctx.createGain();
+
+                osc1.frequency.setValueAtTime(f1, ctx.currentTime);
+                osc2.frequency.setValueAtTime(f2, ctx.currentTime);
+                beatsGain.gain.value = 0.25;
+
+                osc1.connect(beatsGain);
+                osc2.connect(beatsGain);
+                beatsGain.connect(ctx.destination);
+                
+                osc1.start();
+                osc2.start();
+                isBeatsPlaying = true;
+            }
+        });
+
+        freq1Slider.addEventListener('input', updateBeatsChart);
+        freq2Slider.addEventListener('input', updateBeatsChart);
+        updateBeatsChart();
+
+        // --- Section 4: Doppler Effect ---
+        const dopplerCanvas = document.getElementById('dopplerCanvas');
+        const dplCtx = dopplerCanvas.getContext('2d');
+        const dopplerStartBtn = document.getElementById('dopplerStartBtn');
+        const dopplerSoundButtons = document.getElementById('dopplerSoundButtons');
+        const dopplerObserverButtons = document.getElementById('dopplerObserverButtons');
+        const freqRightEl = document.getElementById('freqRight');
+        const freqLeftEl = document.getElementById('freqLeft');
+        let dopplerAnimFrame, dopplerFrameCount;
+        let sourceX_d, waves_d;
+        let dopplerOscillator, dopplerGain;
+        let isDopplerSoundOn = false;
+        let dopplerObserver = 'B'; // Default observer
+
+        const V_SOUND = 340;
+        const V_SOURCE = 34;
+        const F_SOURCE = 440;
+
+        function resetDoppler() {
+            if(dopplerOscillator) {
+                dopplerOscillator.stop();
+                dopplerOscillator = null;
+            }
+            cancelAnimationFrame(dopplerAnimFrame);
+            dopplerAnimFrame = null;
+            sourceX_d = 50;
+            waves_d = [];
+            dopplerFrameCount = 0;
+            freqRightEl.textContent = '--- Hz';
+            freqLeftEl.textContent = '--- Hz';
+            drawDoppler();
+        }
+
+        function drawDoppler() {
+            const w = dopplerCanvas.width;
+            const h = dopplerCanvas.height;
+            dplCtx.clearRect(0, 0, w, h);
+
+            dplCtx.font = '30px sans-serif';
+            dplCtx.fillText('🚑', sourceX_d - 15, h / 2 + 10);
+
+            dplCtx.lineWidth = 2;
+            waves_d.forEach(wave => {
+                dplCtx.strokeStyle = `rgba(13, 148, 136, ${wave.opacity})`;
+                dplCtx.beginPath();
+                dplCtx.arc(wave.x, wave.y, wave.radius, 0, 2 * Math.PI);
+                dplCtx.stroke();
+            });
+        }
+
+        function animateDoppler() {
+            const w = dopplerCanvas.width;
+            const speedScale = 2.5;
+            sourceX_d += V_SOURCE / 60 * speedScale;
+            dopplerFrameCount++;
+            
+            if (dopplerFrameCount % 10 === 0) {
+                waves_d.push({ x: sourceX_d, y: dopplerCanvas.height / 2, radius: 0, opacity: 1.0 });
+            }
+
+            waves_d.forEach(wave => {
+                wave.radius += V_SOUND / 60 * speedScale;
+                wave.opacity *= 0.99; // Fade out old waves
+            });
+            waves_d = waves_d.filter(wave => wave.radius < w && wave.opacity > 0.05);
+
+            if (sourceX_d > w + 50) { // Give a bit more room to exit
+                resetDoppler();
+                return;
+            }
+
+            drawDoppler();
+            
+            const fRight = (V_SOUND / (V_SOUND - V_SOURCE)) * F_SOURCE;
+            const fLeft = (V_SOUND / (V_SOUND + V_SOURCE)) * F_SOURCE;
+            freqRightEl.textContent = `${fRight.toFixed(1)} Hz`;
+            freqLeftEl.textContent = `${fLeft.toFixed(1)} Hz`;
+
+            if (dopplerOscillator) {
+                let currentFreq;
+                if (dopplerObserver === 'A') {
+                    currentFreq = fLeft;
+                } else if (dopplerObserver === 'B') {
+                    currentFreq = fRight;
+                } else { // ambulance
+                    currentFreq = F_SOURCE;
+                }
+                dopplerOscillator.frequency.linearRampToValueAtTime(currentFreq, audioCtx.currentTime + 0.016);
+            }
+
+            dopplerAnimFrame = requestAnimationFrame(animateDoppler);
+        }
+        
+        dopplerStartBtn.addEventListener('click', () => {
+            if (dopplerAnimFrame) return;
+            resetDoppler();
+
+            if (isDopplerSoundOn) {
+                const ctx = getAudioContext();
+                dopplerOscillator = ctx.createOscillator();
+                dopplerGain = ctx.createGain();
+                
+                const fRight = (V_SOUND / (V_SOUND - V_SOURCE)) * F_SOURCE;
+                const fLeft = (V_SOUND / (V_SOUND + V_SOURCE)) * F_SOURCE;
+                let initialFreq;
+                if (dopplerObserver === 'A') {
+                    initialFreq = fLeft;
+                } else if (dopplerObserver === 'B') {
+                    initialFreq = fRight;
+                } else { // ambulance
+                    initialFreq = F_SOURCE;
+                }
+                
+                dopplerOscillator.frequency.value = initialFreq;
+                dopplerGain.gain.setValueAtTime(0.3, ctx.currentTime);
+                dopplerOscillator.connect(dopplerGain).connect(ctx.destination);
+                dopplerOscillator.start();
+            }
+
+            animateDoppler();
+        });
+
+        dopplerSoundButtons.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') return;
+            isDopplerSoundOn = (e.target.dataset.sound === 'on');
+
+            dopplerSoundButtons.querySelectorAll('button').forEach(btn => {
+                btn.classList.replace('bg-teal-500', 'bg-gray-400');
+            });
+            e.target.classList.replace('bg-gray-400', 'bg-teal-500');
+
+            if (!isDopplerSoundOn && dopplerOscillator) {
+                dopplerOscillator.stop();
+                dopplerOscillator = null;
+            }
+        });
+
+        dopplerObserverButtons.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') return;
+            dopplerObserver = e.target.dataset.observer;
+            
+            dopplerObserverButtons.querySelectorAll('button').forEach(btn => {
+                btn.classList.replace('bg-teal-500', 'bg-gray-400');
+            });
+            e.target.classList.replace('bg-gray-400', 'bg-teal-500');
+        });
+        
+        // --- Section 5: Interference ---
+        const interferenceCanvas = document.getElementById('interferenceCanvas');
+        const iCtx = interferenceCanvas.getContext('2d');
+        const phaseSlider = document.getElementById('phaseSlider');
+        const phaseValue = document.getElementById('phaseValue');
+        let interferenceTime = 0;
+
+        const I_WAVELENGTH = 50;
+        const I_SOURCE_DIST = 150;
+        const i_s1 = { x: interferenceCanvas.width / 2 - I_SOURCE_DIST / 2, y: interferenceCanvas.height / 2 };
+        const i_s2 = { x: interferenceCanvas.width / 2 + I_SOURCE_DIST / 2, y: interferenceCanvas.height / 2 };
+
+        function drawInterference() {
+            const w = interferenceCanvas.width;
+            const h = interferenceCanvas.height;
+            const phaseShift = (parseInt(phaseSlider.value) / 360) * 2 * Math.PI;
+            
+            iCtx.clearRect(0, 0, w, h);
+
+            // 1. Draw hyperbolic lines for constructive interference
+            iCtx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+            for (let x = 0; x < w; x += 4) {
+                for (let y = 0; y < h; y += 4) {
+                    const d1 = Math.sqrt((x - i_s1.x)**2 + (y - i_s1.y)**2);
+                    const d2 = Math.sqrt((x - i_s2.x)**2 + (y - i_s2.y)**2);
+                    const pathDiff = d1 - d2;
+                    const totalPhaseDiff = (2 * Math.PI * pathDiff / I_WAVELENGTH) - phaseShift;
+                    
+                    // Intensity is proportional to cos^2(totalPhaseDiff / 2)
+                    if (Math.abs(Math.cos(totalPhaseDiff / 2)) > 0.98) {
+                         iCtx.fillRect(x, y, 3, 3);
+                    }
+                }
+            }
+
+            // 2. Draw moving waves
+            iCtx.strokeStyle = 'rgba(59, 130, 246, 0.7)';
+            iCtx.lineWidth = 1.5;
+            for (let i = 0; i < 15; i++) {
+                let r1 = (interferenceTime % I_WAVELENGTH) + i * I_WAVELENGTH;
+                iCtx.beginPath();
+                iCtx.arc(i_s1.x, i_s1.y, r1, 0, 2 * Math.PI);
+                iCtx.stroke();
+                
+                let r2_phase_offset = (phaseShift / (2 * Math.PI)) * I_WAVELENGTH;
+                let r2 = ((interferenceTime - r2_phase_offset) % I_WAVELENGTH) + i * I_WAVELENGTH;
+                
+                // Draw multiple cycles correctly after phase shift
+                while(r2 < 0) {
+                    r2 += I_WAVELENGTH;
+                }
+                r2 = r2 % I_WAVELENGTH + i*I_WAVELENGTH;
+
+                if (r2 > 0) {
+                    iCtx.beginPath();
+                    iCtx.arc(i_s2.x, i_s2.y, r2, 0, 2 * Math.PI);
+                    iCtx.stroke();
+                }
+            }
+
+            // 3. Draw sources
+            iCtx.font = '30px sans-serif';
+            iCtx.fillText('🔊', i_s1.x - 15, i_s1.y + 10);
+            iCtx.fillText('🔊', i_s2.x - 15, i_s2.y + 10);
+        }
+
+        phaseSlider.addEventListener('input', () => {
+            phaseValue.textContent = phaseSlider.value;
+        });
+
+        // --- Section 6: Air Column Resonance ---
+        const resonanceCanvas = document.getElementById('resonanceCanvas');
+        const resCtx = resonanceCanvas.getContext('2d');
+        const openPipeBtn = document.getElementById('openPipeBtn');
+        const closedPipeBtn = document.getElementById('closedPipeBtn');
+        const modeSlider = document.getElementById('modeSlider');
+        const modeValue = document.getElementById('modeValue');
+        const resonanceFormulas = document.getElementById('resonanceFormulas');
+
+        let pipeType = 'open';
+        let resonanceMode = 1;
+        let resonanceTime = 0;
+
+        function drawResonance() {
+            const w = resonanceCanvas.width;
+            const h = resonanceCanvas.height;
+            const pipeY = h / 2;
+            const pipeHeight = h / 2.5;
+            const pipeLeft = 40;
+            const pipeRight = w - 40;
+            const pipeLength = pipeRight - pipeLeft;
+
+            resCtx.clearRect(0, 0, w, h);
+
+            resCtx.strokeStyle = '#3f3c3a';
+            resCtx.lineWidth = 3;
+            resCtx.beginPath();
+            resCtx.moveTo(pipeLeft, pipeY - pipeHeight / 2);
+            resCtx.lineTo(pipeRight, pipeY - pipeHeight / 2);
+            resCtx.moveTo(pipeLeft, pipeY + pipeHeight / 2);
+            resCtx.lineTo(pipeRight, pipeY + pipeHeight / 2);
+            if (pipeType === 'closed') {
+                resCtx.moveTo(pipeLeft, pipeY - pipeHeight / 2);
+                resCtx.lineTo(pipeLeft, pipeY + pipeHeight / 2);
+            }
+            resCtx.stroke();
+            
+            resCtx.strokeStyle = '#a1a1aa';
+            resCtx.lineWidth = 1;
+            resCtx.setLineDash([5, 5]);
+            resCtx.beginPath();
+            resCtx.moveTo(pipeLeft, pipeY);
+            resCtx.lineTo(pipeRight, pipeY);
+            resCtx.stroke();
+            resCtx.setLineDash([]);
+            
+            const amplitude = (pipeHeight / 2) * 0.8 * Math.cos(resonanceTime);
+            const envelopeAmplitude = (pipeHeight / 2) * 0.8;
+            
+            resCtx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+            resCtx.lineWidth = 1.5;
+            resCtx.setLineDash([4, 4]);
+
+            const topEnvelope = new Path2D();
+            const bottomEnvelope = new Path2D();
+
+            for (let x_px = 0; x_px <= pipeLength; x_px++) {
+                const x = pipeLeft + x_px;
+                let waveShape;
+                if (pipeType === 'open') {
+                    waveShape = Math.cos(resonanceMode * Math.PI * x_px / pipeLength);
+                } else { // closed
+                    waveShape = Math.sin((2 * resonanceMode - 1) * Math.PI * x_px / (2 * pipeLength));
+                }
+
+                if (x_px === 0) {
+                    topEnvelope.moveTo(x, pipeY - envelopeAmplitude * waveShape);
+                    bottomEnvelope.moveTo(x, pipeY + envelopeAmplitude * waveShape);
+                } else {
+                    topEnvelope.lineTo(x, pipeY - envelopeAmplitude * waveShape);
+                    bottomEnvelope.lineTo(x, pipeY + envelopeAmplitude * waveShape);
+                }
+            }
+            resCtx.stroke(topEnvelope);
+            resCtx.stroke(bottomEnvelope);
+            resCtx.setLineDash([]);
+
+            resCtx.strokeStyle = '#0d9488';
+            resCtx.lineWidth = 2.5;
+            resCtx.beginPath();
+            for (let x_px = 0; x_px <= pipeLength; x_px++) {
+                const x = pipeLeft + x_px;
+                let waveShape;
+                 if (pipeType === 'open') {
+                    waveShape = Math.cos(resonanceMode * Math.PI * x_px / pipeLength);
+                } else { // closed
+                    waveShape = Math.sin((2 * resonanceMode - 1) * Math.PI * x_px / (2 * pipeLength));
+                }
+                const y = pipeY - amplitude * waveShape;
+                if (x_px === 0) resCtx.moveTo(x, y);
+                else resCtx.lineTo(x, y);
+            }
+            resCtx.stroke();
+            updateFormulas();
+        }
+
+        function updateFormulas() {
+            const L = 1; // Assume pipe length is 1m for calculation
+            let lambda_m, f, n_val;
+            
+            let formulaHtml = '';
+            if (pipeType === 'open') {
+                n_val = resonanceMode;
+                lambda_m = (2 * L) / n_val;
+                f = n_val * V_SOUND / (2*L);
+                formulaHtml = `
+                    <h4 class="font-bold text-lg mb-2 text-teal-800">開管の共鳴 (n=${n_val})</h4>
+                    <div class="formula-box mb-3">
+                        <p>$\\lambda_n = \\frac{2L}{n}$</p>
+                        <p>$f_n = n \\frac{V}{2L}$</p>
+                    </div>
+                `;
+            } else {
+                n_val = 2 * resonanceMode - 1;
+                lambda_m = (4 * L) / n_val;
+                f = n_val * V_SOUND / (4*L);
+                formulaHtml = `
+                    <h4 class="font-bold text-lg mb-2 text-teal-800">閉管の共鳴 (n=${n_val})</h4>
+                    <div class="formula-box mb-3">
+                        <p>$\\lambda_n = \\frac{4L}{n}$</p>
+                        <p>$f_n = n \\frac{V}{4L}$</p>
+                    </div>
+                `;
+            }
+            formulaHtml += `
+                <p><strong>波長:</strong> ${lambda_m.toFixed(2)} m</p>
+                <p><strong>振動数:</strong> ${f.toFixed(0)} Hz</p>`;
+
+            resonanceFormulas.innerHTML = formulaHtml;
+            if (window.renderMathInElement) {
+                renderMathInElement(resonanceFormulas, {
+                    delimiters: [ {left: "$", right: "$", display: false} ]
+                });
+            }
+        }
+
+        openPipeBtn.addEventListener('click', () => {
+            pipeType = 'open';
+            openPipeBtn.classList.replace('bg-gray-400', 'bg-teal-500');
+            closedPipeBtn.classList.replace('bg-teal-500', 'bg-gray-400');
+            modeSlider.max = 5;
+            resonanceMode = parseInt(modeSlider.value);
+            modeValue.textContent = resonanceMode;
+        });
+        closedPipeBtn.addEventListener('click', () => {
+            pipeType = 'closed';
+            closedPipeBtn.classList.replace('bg-gray-400', 'bg-teal-500');
+            openPipeBtn.classList.replace('bg-teal-500', 'bg-gray-400');
+            modeSlider.max = 3; 
+            if(parseInt(modeSlider.value) > 3) modeSlider.value = 3;
+            resonanceMode = parseInt(modeSlider.value);
+            modeValue.textContent = resonanceMode;
+        });
+        modeSlider.addEventListener('input', (e) => {
+            resonanceMode = parseInt(e.target.value);
+            modeValue.textContent = resonanceMode;
+        });
+
+        // --- Recorder Example within Section 5 ---
+        const recorderHolesContainer = document.getElementById('recorder-holes');
+        const recorderCanvas = document.getElementById('recorderCanvas');
+        const recCtx = recorderCanvas.getContext('2d');
+        const recorderNoteDisplay = document.getElementById('recorderNoteDisplay');
+        const recorderFreqDisplay = document.getElementById('recorderFreqDisplay');
+        const recorderWavelengthDisplay = document.getElementById('recorderWavelengthDisplay');
+        const recorderModeButtons = document.getElementById('recorderModeButtons');
+        const playRecorderBtn = document.getElementById('playRecorderBtn');
+
+        let recorderOscillator;
+        let isRecorderPlaying = false;
+        const NUM_HOLES = 7;
+        const holeStates = new Array(NUM_HOLES).fill(true); // true = closed
+        let recorderMode = 1;
+        let recorderTime = 0;
+        
+        const NOTES = {
+            C4: { name: 'ド', freq: 261.63 }, D4: { name: 'レ', freq: 293.66 },
+            E4: { name: 'ミ', freq: 329.63 }, F4: { name: 'ファ', freq: 349.23 },
+            G4: { name: 'ソ', freq: 392.00 }, A4: { name: 'ラ', freq: 440.00 },
+            B4: { name: 'シ', freq: 493.88 },
+            C5: { name: 'ド (高)', freq: 523.25 } // 高い「ド」を追加
+        };
+        const RECORDER_SCALE = [NOTES.C4, NOTES.D4, NOTES.E4, NOTES.F4, NOTES.G4, NOTES.A4, NOTES.B4, NOTES.C5];
+
+        function setupRecorder() {
+            recorderHolesContainer.innerHTML = '';
+            for (let i = 0; i < NUM_HOLES; i++) {
+                const hole = document.createElement('div');
+                hole.className = 'hole bg-gray-800 border-gray-900';
+                hole.dataset.index = i;
+                recorderHolesContainer.appendChild(hole);
+
+                hole.addEventListener('click', () => {
+                    const index = parseInt(hole.dataset.index);
+                    holeStates[index] = !holeStates[index];
+                    if (!holeStates[index]) { // If a hole is opened
+                        for (let j = index + 1; j < NUM_HOLES; j++) {
+                            holeStates[j] = false; // Open all holes below it
+                        }
+                    } else { // If a hole is closed
+                         for (let j = 0; j < index; j++) {
+                            holeStates[j] = true; // Close all holes above it
+                        }
+                    }
+                    updateRecorderState();
+                });
+            }
+            updateRecorderState();
+        }
+
+        function getNoteIndex() {
+            let firstOpenHole = holeStates.indexOf(false);
+            if (firstOpenHole === -1) {
+                firstOpenHole = NUM_HOLES;
+            }
+            return NUM_HOLES - firstOpenHole;
+        }
+
+        function updateRecorderState() {
+            const holes = recorderHolesContainer.children;
+            for (let i = 0; i < NUM_HOLES; i++) {
+                if (holeStates[i]) {
+                    holes[i].classList.remove('bg-white', 'border-gray-500');
+                    holes[i].classList.add('bg-gray-800', 'border-gray-900');
+                } else {
+                    holes[i].classList.remove('bg-gray-800', 'border-gray-900');
+                    holes[i].classList.add('bg-white', 'border-gray-500');
+                }
+            }
+
+            const noteIndex = getNoteIndex();
+            const currentNote = RECORDER_SCALE[noteIndex];
+            const frequency = currentNote.freq * recorderMode;
+            const wavelength = V_SOUND / frequency;
+
+            recorderNoteDisplay.textContent = currentNote.name;
+            recorderFreqDisplay.textContent = `振動数: ${frequency.toFixed(2)} Hz`;
+            recorderWavelengthDisplay.textContent = `波長: ${wavelength.toFixed(2)} m`;
+            
+            if (isRecorderPlaying && recorderOscillator) {
+                recorderOscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            }
+        }
+
+        function drawRecorderWave() {
+            const w = recorderCanvas.width;
+            const h = recorderCanvas.height;
+            if (recorderCanvas.width !== recorderCanvas.clientWidth || recorderCanvas.height !== recorderCanvas.clientHeight) {
+                recorderCanvas.width = recorderCanvas.clientWidth;
+                recorderCanvas.height = recorderCanvas.clientHeight;
+            }
+            recCtx.clearRect(0, 0, w, h);
+            
+            const pipeTopMargin = 48;
+            const holeSpacing = 32 + 16; // height + margin
+            let firstOpenHole = holeStates.indexOf(false);
+            if (firstOpenHole === -1) firstOpenHole = NUM_HOLES;
+
+            const effectivePipeEnd = pipeTopMargin + (firstOpenHole * holeSpacing);
+            const pipeX = w / 2;
+            
+            recCtx.globalAlpha = 0.6;
+            const amplitude = (w / 2) * 0.4 * Math.cos(recorderTime);
+            
+            recCtx.strokeStyle = '#ef4444';
+            recCtx.lineWidth = 2;
+            recCtx.beginPath();
+            for (let y = 0; y <= effectivePipeEnd; y++) {
+                const waveShape = Math.cos(recorderMode * Math.PI * y / effectivePipeEnd);
+                const x = pipeX + amplitude * waveShape;
+                if (y === 0) recCtx.moveTo(x, y);
+                else recCtx.lineTo(x, y);
+            }
+            recCtx.stroke();
+            recCtx.globalAlpha = 1.0;
+        }
+
+        recorderModeButtons.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                recorderMode = parseInt(e.target.dataset.mode);
+                recorderModeButtons.querySelectorAll('button').forEach(btn => {
+                    btn.classList.replace('bg-teal-500', 'bg-gray-400');
+                });
+                e.target.classList.replace('bg-gray-400', 'bg-teal-500');
+                updateRecorderState();
+            }
+        });
+
+        playRecorderBtn.addEventListener('click', () => {
+            const ctx = getAudioContext();
+            if (isRecorderPlaying) {
+                recorderOscillator.stop();
+                return;
+            }
+            
+            const noteIndex = getNoteIndex();
+            const frequency = RECORDER_SCALE[noteIndex].freq * recorderMode;
+            
+            recorderOscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            recorderOscillator.type = 'sine';
+            recorderOscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+            gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+            
+            recorderOscillator.connect(gainNode).connect(ctx.destination);
+            recorderOscillator.start();
+            isRecorderPlaying = true;
+            playRecorderBtn.classList.replace('bg-rose-500', 'bg-gray-500');
+            playRecorderBtn.innerHTML = `■ 停止`;
+
+            recorderOscillator.onended = () => {
+                isRecorderPlaying = false;
+                recorderOscillator = null;
+                if (playRecorderBtn) {
+                    playRecorderBtn.classList.replace('bg-gray-500', 'bg-rose-500');
+                    playRecorderBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-13c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"></path></svg> 音を鳴らす`;
+                }
+            };
+        });
+
+        // --- Section 6: String Instrument ---
+        const stringInstrumentCanvas = document.getElementById('stringInstrumentCanvas');
+        const sCtx = stringInstrumentCanvas.getContext('2d');
+        const pluckStringBtn = document.getElementById('pluckStringBtn');
+        const stringBaseNoteSelector = document.getElementById('stringBaseNoteSelector');
+        const stringFretSlider = document.getElementById('stringFretSlider');
+        const stringTensionSlider = document.getElementById('stringTensionSlider');
+        const stringDensitySlider = document.getElementById('stringDensitySlider');
+        const stringFretValue = document.getElementById('stringFretValue');
+        const stringLengthDisplay = document.getElementById('stringLengthDisplay');
+        const stringTensionValue = document.getElementById('stringTensionValue');
+        const stringDensityValue = document.getElementById('stringDensityValue');
+        const stringFreqDisplay = document.getElementById('stringFreqDisplay');
+        const stringWaveSpeedDisplay = document.getElementById('stringWaveSpeedDisplay');
+        
+        let stringAnimFrame;
+        let stringAmplitude, stringTime;
+        let stringOscillator, stringGain;
+
+        const MASTER_CHROMATIC_SCALE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const NOTE_FREQUENCIES = { // Frequencies for Octave 3
+            'C': 130.81, 'C#': 138.59, 'D': 146.83, 'D#': 155.56, 'E': 164.81, 
+            'F': 174.61, 'F#': 185.00, 'G': 196.00, 'G#': 207.65, 'A': 220.00, 
+            'A#': 233.08, 'B': 246.94
+        };
+        let currentNoteScale = [];
+        const L_OPEN = 0.8; // Open string length in meters
+
+        function setupStringScale() {
+            const baseNote = stringBaseNoteSelector.value;
+            const baseNoteIndex = MASTER_CHROMATIC_SCALE.indexOf(baseNote);
+            
+            const part1 = MASTER_CHROMATIC_SCALE.slice(baseNoteIndex);
+            const part2 = MASTER_CHROMATIC_SCALE.slice(0, baseNoteIndex);
+            
+            // Create a 13-note scale starting from the base note for open string + 12 frets
+            currentNoteScale = part1.concat(part2).concat(part1[0]);
+
+            updateStringInstrument();
+        }
+
+        function tuneString() {
+            const baseNoteName = stringBaseNoteSelector.value;
+            const f_open = NOTE_FREQUENCIES[baseNoteName];
+            
+            if (!f_open) return;
+
+            const mu = parseFloat(stringDensitySlider.value) / 1000;
+            const T = mu * Math.pow(2 * L_OPEN * f_open, 2);
+            
+            // Dynamically adjust slider range if needed to prevent clipping
+            if (T > parseFloat(stringTensionSlider.max)) {
+                stringTensionSlider.max = T * 1.2;
+            }
+            if (T < parseFloat(stringTensionSlider.min)) {
+                // To prevent min > max, only adjust if it makes sense
+                if (T > 0) stringTensionSlider.min = T * 0.8;
+            }
+            stringTensionSlider.value = T;
+            
+            setupStringScale(); // This will call updateStringInstrument internally to refresh everything
+        }
+
+        function updateStringInstrument() {
+            const n = parseInt(stringFretSlider.value); // Fret number
+            const L = L_OPEN / Math.pow(2, n / 12);
+            
+            const T = parseFloat(stringTensionSlider.value);
+            const mu = parseFloat(stringDensitySlider.value) / 1000; // g/m to kg/m
+
+            stringFretValue.textContent = `${n > 0 ? n + ' フレット' : '開放弦'} (${currentNoteScale[n]})`;
+            stringLengthDisplay.textContent = L.toFixed(3);
+            stringTensionValue.textContent = T.toFixed(0);
+            stringDensityValue.textContent = (mu * 1000).toFixed(2);
+
+            const v = Math.sqrt(T / mu);
+            const f = v / (2 * L);
+
+            stringWaveSpeedDisplay.textContent = `波の速さ: ${v.toFixed(1)} m/s`;
+            stringFreqDisplay.textContent = `${f.toFixed(1)} Hz`;
+            
+            drawStringInstrument();
+            return f;
+        }
+
+        function drawStringInstrument() {
+            const w = stringInstrumentCanvas.width;
+            const h = stringInstrumentCanvas.height;
+            sCtx.clearRect(0, 0, w, h);
+            
+            const y_center = h / 2;
+            const string_start = 40; // Increased margin for fret labels
+            const string_end = w - 20;
+            const string_width = string_end - string_start;
+
+            // Draw Fretboard and Frets
+            sCtx.fillStyle = '#d2b48c'; // tan color for fretboard
+            sCtx.fillRect(string_start, y_center - 20, string_width, 40);
+
+            sCtx.strokeStyle = '#a0522d'; // saddlebrown for frets
+            sCtx.lineWidth = 2;
+            sCtx.fillStyle = '#000000';
+            sCtx.font = '12px Noto Sans JP';
+            sCtx.textAlign = 'center';
+            
+            const fretNotes = currentNoteScale.slice(1); // Notes for frets 1-12
+            for (let i = 0; i < 12; i++) {
+                const n_fret = i + 1;
+                const fretX = string_start + string_width * (1 - 1 / Math.pow(2, n_fret / 12));
+                sCtx.beginPath();
+                sCtx.moveTo(fretX, y_center - 20);
+                sCtx.lineTo(fretX, y_center + 20);
+                sCtx.stroke();
+                sCtx.fillText(fretNotes[i], fretX, y_center + 38);
+            }
+            
+            // Draw string
+            sCtx.strokeStyle = '#3f3c3a';
+            sCtx.lineWidth = 1 + parseFloat(stringDensitySlider.value);
+            
+            sCtx.beginPath();
+            
+            const n = parseInt(stringFretSlider.value);
+            
+            let pressed_x;
+            if (n === 0) {
+                pressed_x = string_start;
+            } else {
+                pressed_x = string_start + string_width * (1 - 1 / Math.pow(2, n / 12));
+            }
+            
+            // Vibrating part of the string is from the pressed point to the bridge
+            const vibrating_length_pixels = string_end - pressed_x;
+            
+            // Straight part of the string (nut to finger)
+            sCtx.moveTo(string_start, y_center);
+            sCtx.lineTo(pressed_x, y_center);
+
+            // Vibrating part (finger to bridge)
+            if (stringAmplitude > 0.1) {
+                for (let x = 0; x <= vibrating_length_pixels; x++) {
+                    const y_offset = stringAmplitude * Math.sin(Math.PI * x / vibrating_length_pixels) * Math.cos(stringTime);
+                    sCtx.lineTo(pressed_x + x, y_center + y_offset);
+                }
+            } else {
+                 sCtx.lineTo(string_end, y_center);
+            }
+
+            sCtx.stroke();
+
+            // Draw bridge/nut
+            sCtx.fillStyle = '#854d0e';
+            sCtx.fillRect(string_start - 5, y_center - 10, 5, 20); // Nut
+            sCtx.fillRect(string_end, y_center - 10, 5, 20); // Bridge
+
+            // Draw a "finger" marker to show the current length
+            sCtx.fillStyle = 'rgba(239, 68, 68, 0.7)';
+            sCtx.beginPath();
+            sCtx.arc(pressed_x, y_center, 6, 0, 2 * Math.PI);
+            sCtx.fill();
+        }
+
+        function animateString() {
+            stringTime += 0.5;
+            stringAmplitude *= 0.985; // Damping
+
+            drawStringInstrument();
+
+            if (stringAmplitude > 0.1) {
+                stringAnimFrame = requestAnimationFrame(animateString);
+            } else {
+                stringAmplitude = 0;
+                drawStringInstrument(); // Draw final flat string
+            }
+        }
+
+        pluckStringBtn.addEventListener('click', () => {
+            if (stringOscillator) {
+                try {
+                    stringGain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+                    stringOscillator.stop(audioCtx.currentTime + 0.5);
+                } catch(e) {
+                    console.log("Error stopping oscillator:", e);
+                }
+            }
+
+            const ctx = getAudioContext();
+            const freq = updateStringInstrument();
+            
+            stringOscillator = ctx.createOscillator();
+            stringGain = ctx.createGain();
+            
+            stringOscillator.type = 'sawtooth';
+            stringOscillator.frequency.value = freq;
+            
+            stringGain.gain.setValueAtTime(0.3, ctx.currentTime);
+            stringGain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.5);
+            
+            stringOscillator.connect(stringGain).connect(ctx.destination);
+            stringOscillator.start();
+            stringOscillator.stop(ctx.currentTime + 1.5);
+
+            stringAmplitude = 50;
+            stringTime = 0;
+            cancelAnimationFrame(stringAnimFrame);
+            animateString();
+        });
+
+        stringBaseNoteSelector.addEventListener('change', tuneString);
+        stringFretSlider.addEventListener('input', updateStringInstrument);
+        stringTensionSlider.addEventListener('input', updateStringInstrument);
+        stringDensitySlider.addEventListener('input', updateStringInstrument);
+        
+        // --- Section 7: Musical Scales ---
+        const pianoContainer = document.getElementById('piano-container');
+        const playChordBtn = document.getElementById('playChordBtn');
+        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+        const chordSelector = document.getElementById('chord-selector');
+        const pianoNoteDisplay = document.getElementById('piano-note-display');
+        const pianoFreqDisplay = document.getElementById('piano-freq-display');
+        const pianoRatioDisplay = document.getElementById('piano-ratio-display');
+        const pianoIntegerRatioDisplay = document.getElementById('piano-integer-ratio-display');
+        
+        const PIANO_NOTES = [
+            { note: 'C3', type: 'white' }, { note: 'C#3', type: 'black' },
+            { note: 'D3', type: 'white' }, { note: 'D#3', type: 'black' },
+            { note: 'E3', type: 'white' }, { note: 'F3', type: 'white' },
+            { note: 'F#3', type: 'black' }, { note: 'G3', type: 'white' },
+            { note: 'G#3', type: 'black' }, { note: 'A3', type: 'white' },
+            { note: 'A#3', type: 'black' }, { note: 'B3', type: 'white' },
+            { note: 'C4', type: 'white' }, { note: 'C#4', type: 'black' },
+            { note: 'D4', type: 'white' }, { note: 'D#4', type: 'black' },
+            { note: 'E4', type: 'white' }, { note: 'F4', type: 'white' },
+            { note: 'F#4', type: 'black' }, { note: 'G4', type: 'white' },
+            { note: 'G#4', type: 'black' }, { note: 'A4', type: 'white' },
+            { note: 'A#4', type: 'black' }, { note: 'B4', type: 'white' },
+            { note: 'C5', type: 'white' }, { note: 'C#5', type: 'black' },
+            { note: 'D5', type: 'white' }, { note: 'D#5', type: 'black' },
+            { note: 'E5', type: 'white' }, { note: 'F5', type: 'white' },
+            { note: 'F#5', type: 'black' }, { note: 'G5', type: 'white' },
+            { note: 'G#5', type: 'black' }, { note: 'A5', type: 'white' },
+            { note: 'A#5', type: 'black' }, { note: 'B5', type: 'white' },
+            { note: 'C6', type: 'white' }
+        ];
+        const BASE_FREQ = 130.81; // C3
+        const C4_FREQ = 261.63;
+        let selectedPianoKeys = [];
+        const SEMITONE_RATIOS = { // Just Intonation Ratios (approx.)
+            0: '1/1', 1: '16/15', 2: '9/8', 3: '6/5', 4: '5/4', 5: '4/3',
+            6: '45/32', 7: '3/2', 8: '8/5', 9: '5/3', 10: '9/5', 11: '15/8',
+        };
+
+        function gcd(a, b) {
+            return b ? gcd(b, a % b) : a;
+        }
+
+        function createPiano() {
+            pianoContainer.innerHTML = '';
+            PIANO_NOTES.forEach((keyInfo, i) => {
+                const key = document.createElement('div');
+                key.className = `key ${keyInfo.type}`;
+                key.dataset.note = keyInfo.note;
+                
+                const freq = BASE_FREQ * Math.pow(2, i / 12);
+                key.dataset.freq = freq;
+
+                key.addEventListener('mousedown', () => togglePianoKey(key));
+                pianoContainer.appendChild(key);
+            });
+        }
+
+        function togglePianoKey(key) {
+            key.classList.toggle('selected');
+            const note = key.dataset.note;
+            const index = selectedPianoKeys.findIndex(k => k.dataset.note === note);
+
+            if (index > -1) {
+                selectedPianoKeys.splice(index, 1);
+            } else {
+                selectedPianoKeys.push(key);
+            }
+
+            selectedPianoKeys.sort((a, b) => parseFloat(a.dataset.freq) - parseFloat(b.dataset.freq));
+            updateChordInfo();
+        }
+
+        function updateChordInfo() {
+            if (selectedPianoKeys.length === 0) {
+                pianoNoteDisplay.textContent = '-';
+                pianoFreqDisplay.textContent = '周波数: --- Hz';
+                pianoRatioDisplay.textContent = '基準音からの周波数比: -';
+                pianoIntegerRatioDisplay.textContent = '単純な整数比: -';
+                return;
+            }
+
+            const notes = selectedPianoKeys.map(k => k.dataset.note).join(' + ');
+            const freqs = selectedPianoKeys.map(k => parseFloat(k.dataset.freq).toFixed(2) + 'Hz').join(' + ');
+            
+            pianoNoteDisplay.textContent = notes;
+            pianoFreqDisplay.textContent = `周波数: ${freqs}`;
+
+            const baseKey = selectedPianoKeys[0];
+            const baseFreq = parseFloat(baseKey.dataset.freq);
+            const baseKeyIndex = PIANO_NOTES.findIndex(n => n.note === baseKey.dataset.note);
+
+            const ratios = selectedPianoKeys.map(k => (parseFloat(k.dataset.freq) / baseFreq).toFixed(3)).join(' : ');
+            pianoRatioDisplay.textContent = `周波数比 (${baseKey.dataset.note}基準): ${ratios}`;
+
+            // Calculate simple integer ratios
+            let denominators = [];
+            let numerators = [];
+            let ratiosFound = true;
+            
+            selectedPianoKeys.forEach(key => {
+                const currentKeyIndex = PIANO_NOTES.findIndex(n => n.note === key.dataset.note);
+                const semitones = currentKeyIndex - baseKeyIndex;
+                const semitonesInOctave = semitones % 12;
+                const octaves = Math.floor(semitones / 12);
+
+                const ratioStr = SEMITONE_RATIOS[semitonesInOctave];
+                if (!ratioStr) {
+                    ratiosFound = false;
+                    return;
+                }
+                
+                let [num, den] = ratioStr.split('/').map(Number);
+                num *= Math.pow(2, octaves);
+                
+                let commonDivisor = gcd(num, den);
+                numerators.push(num / commonDivisor);
+                denominators.push(den / commonDivisor);
+            });
+
+            if (ratiosFound) {
+                let lcm = denominators.reduce((a, b) => (a * b) / gcd(a, b), 1);
+                let finalNumerators = numerators.map((num, i) => Math.round(num * (lcm / denominators[i])));
+                pianoIntegerRatioDisplay.textContent = `単純な整数比 (近似): ${finalNumerators.join(' : ')}`;
+            } else {
+                pianoIntegerRatioDisplay.textContent = '単純な整数比: -';
+            }
+        }
+
+        function playChord() {
+            if (selectedPianoKeys.length === 0) return;
+
+            const ctx = getAudioContext();
+            const masterGain = ctx.createGain();
+            masterGain.gain.value = Math.max(0.05, 0.4 / selectedPianoKeys.length); // Adjust volume
+            masterGain.connect(ctx.destination);
+            
+            selectedPianoKeys.forEach(key => {
+                const freq = parseFloat(key.dataset.freq);
+                const osc = ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.connect(masterGain);
+                osc.start();
+                osc.stop(ctx.currentTime + 1);
+            });
+        }
+        
+        function clearSelection(resetDropdown = true) {
+            selectedPianoKeys.forEach(key => key.classList.remove('selected'));
+            selectedPianoKeys = [];
+            if (resetDropdown) {
+                chordSelector.selectedIndex = 0;
+            }
+            updateChordInfo();
+        }
+
+        function selectChord(event) {
+            clearSelection(false);
+            const selectedNotes = event.target.value;
+            if (!selectedNotes) return;
+
+            const notes = selectedNotes.split(',');
+            const allKeys = pianoContainer.querySelectorAll('.key');
+
+            allKeys.forEach(key => {
+                if (notes.includes(key.dataset.note)) {
+                    togglePianoKey(key);
+                }
+            });
+        }
+
+        playChordBtn.addEventListener('click', playChord);
+        clearSelectionBtn.addEventListener('click', () => clearSelection(true));
+        chordSelector.addEventListener('change', selectChord);
+
+        // --- Section 9: Missing Fundamental ---
+        const fundamentalSlider = document.getElementById('fundamentalSlider');
+        const fundamentalValue = document.getElementById('fundamentalValue');
+        const harmonicsCheckboxes = document.getElementById('harmonicsCheckboxes');
+        const playHarmonicsBtn = document.getElementById('playHarmonicsBtn');
+        const playFundamentalBtn = document.getElementById('playFundamentalBtn');
+        
+        function updateHarmonicsDisplay() {
+            const f0 = parseFloat(fundamentalSlider.value);
+            fundamentalValue.textContent = f0.toFixed(0);
+            harmonicsCheckboxes.querySelectorAll('label').forEach(label => {
+                const checkbox = label.querySelector('input');
+                const multiplier = parseInt(checkbox.value);
+                label.querySelector('span').textContent = (f0 * multiplier).toFixed(0);
+            });
+        }
+
+        function playHarmonics() {
+            const ctx = getAudioContext();
+            const f0 = parseFloat(fundamentalSlider.value);
+            const selectedHarmonics = Array.from(harmonicsCheckboxes.querySelectorAll('input:checked')).map(cb => parseInt(cb.value));
+
+            if (selectedHarmonics.length === 0) return;
+
+            const masterGain = ctx.createGain();
+            masterGain.gain.value = 0.5 / selectedHarmonics.length;
+            masterGain.connect(ctx.destination);
+
+            selectedHarmonics.forEach(harmonic => {
+                const osc = ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = f0 * harmonic;
+                osc.connect(masterGain);
+                osc.start();
+                osc.stop(ctx.currentTime + 1.5);
+            });
+        }
+
+        function playFundamental() {
+            const ctx = getAudioContext();
+            const f0 = parseFloat(fundamentalSlider.value);
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.value = f0;
+            gain.gain.value = 0.5;
+            
+            osc.connect(gain).connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 1.5);
+        }
+
+        fundamentalSlider.addEventListener('input', updateHarmonicsDisplay);
+        playHarmonicsBtn.addEventListener('click', playHarmonics);
+        playFundamentalBtn.addEventListener('click', playFundamental);
+
+        // --- Master Animation Loop ---
+        function masterAnimate() {
+            interferenceTime++;
+            longWaveTime += 0.05;
+            resonanceTime += 0.05;
+            recorderTime += 0.08;
+            drawLongitudinalWave();
+            drawInterference();
+            drawResonance();
+            drawRecorderWave();
+            requestAnimationFrame(masterAnimate);
+        }
+
+        // --- Initial Calls ---
+        resetDoppler();
+        setupRecorder();
+        tuneString(); 
+        createPiano();
+        updateHarmonicsDisplay();
+        masterAnimate();
+    });
+    </script>
+</body>
+</html>
+

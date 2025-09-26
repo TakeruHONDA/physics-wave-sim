@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インタラクティブ物理学習：波の世界</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #fdfcfb;
+            color: #3f3c3a;
+        }
+        .chart-container-2d {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            max-height: 35vh;
+        }
+        .chart-container-3d {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            max-height: 60vh;
+        }
+        .animation-canvas {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            border: 1px solid #e7e5e4;
+        }
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(253, 252, 251, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .section-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            border: 1px solid #f3f2f1;
+        }
+        .control-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .control-button:active {
+            transform: translateY(0);
+        }
+        .formula-box {
+            background-color: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            border-left: 4px solid #14b8a6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            color: #0f766e;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-teal-600 text-white text-center py-8">
+        <h1 class="text-4xl font-bold">インタラクティブ物理学習</h1>
+        <p class="text-xl mt-2">波の世界を探求しよう</p>
+    </header>
+
+    <nav class="sticky-nav shadow-md">
+        <div class="max-w-5xl mx-auto px-4">
+            <div class="flex justify-center items-center space-x-4 md:space-x-8 py-3 text-sm md:text-base">
+                <a href="#section-what-is-wave" class="text-gray-600 hover:text-teal-600 font-semibold transition">波とは？</a>
+                <a href="#section-basics" class="text-gray-600 hover:text-teal-600 font-semibold transition">波の基本</a>
+                <a href="#section-properties" class="text-gray-600 hover:text-teal-600 font-semibold transition">波の性質</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-4 md:p-8 space-y-16">
+
+        <section id="section-what-is-wave" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">1. 波とは？</h2>
+            <p class="mb-6 text-gray-700">波（波動）とは、ある場所で生じた振動が、次々とまわりの場所に伝わっていく現象です。波を伝える物質を「媒質」と呼びます。このセクションでは、波の基本的な2種類である「横波」と「縦波」の動きの違いを、アニメーションで視覚的に比較します。下のキャンバスで、粒子（色のついた点）の動きと波全体の進行方向の関係に注目してください。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-center">横波 (Transverse Wave)</h3>
+                    <canvas id="transverseWaveCanvas" class="w-full animation-canvas" width="400" height="200"></canvas>
+                    <p class="text-sm text-gray-600 mt-2">媒質の振動方向（上下）が、波の進行方向（右）と<strong class="text-teal-600">垂直</strong>な波。例：光、弦の振動。</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-center">縦波 (Longitudinal Wave)</h3>
+                    <canvas id="longitudinalWaveCanvas" class="w-full animation-canvas" width="400" height="200"></canvas>
+                    <p class="text-sm text-gray-600 mt-2">媒質の振動方向（左右）が、波の進行方向（右）と<strong class="text-teal-600">平行</strong>な波。疎密波とも呼ばれる。例：音。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-basics" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">2. 波の基本要素と公式</h2>
+            <p class="mb-6 text-gray-700">波の振る舞いは、空間と時間の両方で記述されます。スライダーを操作して、振幅・波長・周期を変化させると、下の2Dグラフと3Dグラフがどのように変わるか観察しましょう。これにより、波の基本公式の関係性を多角的に理解できます。</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                 <div>
+                    <label for="amplitudeSlider" class="font-semibold">振幅 (A): <span id="amplitudeValue">0.5</span> m</label>
+                    <input id="amplitudeSlider" type="range" min="0.1" max="1.0" value="0.5" step="0.05" class="w-full">
+                </div>
+                <div>
+                    <label for="wavelengthSlider" class="font-semibold">波長 (λ): <span id="wavelengthValue">4.0</span> m</label>
+                    <input id="wavelengthSlider" type="range" min="1" max="8" value="4" step="0.2" class="w-full">
+                </div>
+                <div>
+                    <label for="periodSlider" class="font-semibold">周期 (T): <span id="periodSliderValue">2.0</span> s</label>
+                    <input id="periodSlider" type="range" min="0.5" max="5.0" value="2.0" step="0.1" class="w-full">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                 <div class="formula-box flex items-center justify-center text-2xl">v = fλ</div>
+                 <div class="formula-box flex items-center justify-center text-2xl">f = 1 / T</div>
+            </div>
+             <div class="p-4 bg-gray-100 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-8">
+                <div>
+                    <p class="text-sm text-gray-500">波の速さ (v)</p>
+                    <p class="text-xl font-bold text-teal-800"><span id="speedValue">2.00</span> m/s</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">周期 (T)</p>
+                    <p class="text-xl font-bold text-teal-800"><span id="periodValue">2.00</span> s</p>
+                </div>
+                 <div>
+                    <p class="text-sm text-gray-500">振動数 (f)</p>
+                    <p class="text-xl font-bold text-teal-800"><span id="frequencyValue">0.50</span> Hz</p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="p-4 border rounded-lg">
+                    <h3 class="text-xl font-semibold mb-2 text-center">y-x グラフ (波形)</h3>
+                    <p class="text-sm text-center text-gray-600 mb-2">ある瞬間の波の形 (t=0)</p>
+                    <div class="chart-container-2d">
+                        <canvas id="waveChart"></canvas>
+                    </div>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <h3 class="text-xl font-semibold mb-2 text-center">y-t グラフ (単振動)</h3>
+                    <p class="text-sm text-center text-gray-600 mb-2">ある一点の揺れ (x=0)</p>
+                    <div class="chart-container-2d">
+                        <canvas id="timeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 p-4 border rounded-lg">
+                 <h3 class="text-xl font-semibold mb-2 text-center">y-x-t グラフ (波の伝播)</h3>
+                 <p class="text-sm text-center text-gray-600 mb-2">波形が時間と共に進む様子（ドラッグで視点変更可）</p>
+                 <div class="my-4 formula-box flex items-center justify-center text-xl">
+                    y(x, t) = A sin(2π(t/T - x/λ))
+                 </div>
+                <div class="chart-container-3d mx-auto">
+                    <div id="wave3dChart" class="w-full h-full"></div>
+                </div>
+            </div>
+
+            <div class="mt-8 p-4 border rounded-lg">
+                <h3 class="text-xl font-semibold mb-2 text-center">位相差 (Phase Difference)</h3>
+                <p class="text-sm text-center text-gray-600 mb-4">
+                    位相差 <strong class="text-pink-500">φ</strong> は2つの波の「タイミングのズレ」です。数式の <strong class="text-pink-500">φ</strong> が正のとき、波は<strong class="text-teal-600">左にずれ（位相が進み）</strong>、負のとき<strong class="text-teal-600">右にずれます（位相が遅れます）</strong>。
+                </p>
+                
+                <div class="formula-box text-lg text-left p-4 space-y-2 my-4">
+                    <p style="color: #3b82f6;"><b>基準の波 (青):</b> y₁ = A sin(kx)</p>
+                    <p style="color: #ec4899;" class="whitespace-nowrap"><b>比較の波 (ピンク):</b> y₂ = A sin(kx<span id="phaseSign" class="font-bold text-xl"> + </span><span id="phaseFormulaValue" class="font-bold text-xl">0.00</span>)</p>
+                </div>
+
+                <canvas id="phaseDifferenceCanvas" class="w-full h-48 animation-canvas"></canvas>
+                <div class="mt-4">
+                    <label for="phaseSlider" class="font-semibold">位相差 (φ) を変更: <span id="phaseValue" class="text-lg font-bold text-pink-600">0.00 rad (0)</span></label>
+                    <input id="phaseSlider" type="range" min="-3.141" max="3.141" value="0" step="0.01" class="w-full">
+                </div>
+                <div class="mt-2 p-2 bg-gray-100 rounded-lg text-center">
+                    <p class="font-semibold">状態: <span id="phaseStatus" class="text-xl text-teal-700">同位相 (In Phase)</span></p>
+                </div>
+            </div>
+            </section>
+
+        <section id="section-properties" class="section-card">
+            <h2 class="text-3xl font-bold text-teal-700 mb-4">3. 波に特有の性質</h2>
+            <p class="mb-6 text-gray-700">波は、粒子には見られないユニークな性質を持っています。ここでは、その基本的な原理である「重ね合わせ」から、それによって引き起こされる様々な現象をアニメーションで観察できます。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="md:col-span-2">
+                    <h3 class="text-xl font-semibold mb-2 text-center">重ね合わせの原理と波の独立性</h3>
+                    <canvas id="superpositionCanvas" class="w-full h-48 animation-canvas"></canvas>
+                    <div class="flex justify-center items-center space-x-4 mt-2">
+                        <button id="superpositionPlayPauseBtn" class="px-4 py-2 bg-teal-500 text-white rounded-lg control-button w-24">再生</button>
+                        <button id="superpositionResetBtn" class="px-4 py-2 bg-gray-400 text-white rounded-lg control-button">リセット</button>
+                    </div>
+                    <div class="mt-2">
+                        <label for="superpositionTimeSlider" class="text-sm font-semibold">時間操作</label>
+                        <input id="superpositionTimeSlider" type="range" min="0" max="200" value="0" step="1" class="w-full">
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">2つの波が重なるとき、その場所の変位は各波の変位の和（<strong class="text-teal-600">合成波</strong>）になります。通り過ぎた後は、互いに影響されず元の形のまま進みます（<strong class="text-teal-600">波の独立性</strong>）。</p>
+                </div>
+
+                <div class="md:col-span-2 mt-8">
+                    <h3 class="text-xl font-semibold mb-2 text-center">進行波と定在波</h3>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2 text-center">進行波 (Traveling Wave)</h4>
+                            <canvas id="travelingWaveCanvas" class="w-full h-48 animation-canvas"></canvas>
+                            <p class="text-sm text-gray-600 mt-2">波形全体が平行移動していく波。</p>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2 text-center">定在波 (Standing Wave)</h4>
+                            <canvas id="standingWaveCanvas" class="w-full h-48 animation-canvas"></canvas>
+                            <p class="text-sm text-gray-600 mt-2">逆向きに進む同じ波（<span class="text-blue-500">青線</span>と<span class="text-green-500">緑線</span>）が重なり合ってできます。全く振動しない<strong class="text-red-500">節（赤い点）</strong>と、最も大きく振動する<strong class="text-blue-500">腹（青い点）</strong>が特徴です。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 mt-8">
+                    <h3 class="text-xl font-semibold mb-2 text-center">反射・屈折・全反射</h3>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                             <h4 class="text-lg font-semibold mb-2 text-center">反射の法則</h4>
+                             <canvas id="reflectionLawCanvas" class="w-full h-64 animation-canvas"></canvas>
+                             <div class="mt-2">
+                                <label for="reflectionAngleSlider" class="text-sm font-semibold">入射角 (i): <span id="reflectionAngleValue">45</span>°</label>
+                                <input id="reflectionAngleSlider" type="range" min="0" max="89" value="45" class="w-full">
+                             </div>
+                             <div class="mt-2 formula-box text-center">入射角 i = 反射角 r</div>
+                        </div>
+                        <div>
+                             <h4 class="text-lg font-semibold mb-2 text-center">屈折の法則 (スネルの法則)</h4>
+                             <canvas id="refractionLawCanvas" class="w-full h-64 animation-canvas"></canvas>
+                             <div class="mt-2">
+                                <label for="refractionAngleSlider" class="text-sm font-semibold">入射角 (i): <span id="refractionAngleValue">45</span>°</label>
+                                <input id="refractionAngleSlider" type="range" min="0" max="89" value="45" class="w-full">
+                             </div>
+                              <div class="mt-2">
+                                <label for="refractionN2Slider" class="text-sm font-semibold">媒質2の屈折率 (n₂): <span id="refractionN2Value">1.5</span></label>
+                                <input id="refractionN2Slider" type="range" min="0.5" max="2.5" value="1.5" step="0.1" class="w-full">
+                             </div>
+                             <div class="mt-2 space-y-2">
+                                <div class="formula-box text-center">n₁ sin(i) = n₂ sin(r)</div>
+                                <div class="formula-box text-center">n₁₂ = n₂/n₁ = v₁/v₂ = λ₁/λ₂</div>
+                             </div>
+                             <div class="mt-2 p-2 bg-gray-100 rounded-lg text-xs grid grid-cols-2 gap-1">
+                                <p>屈折角 r: <strong id="refractionAngleR"></strong>°</p>
+                                <p>相対屈折率 n₁₂: <strong id="refractionN12"></strong></p>
+                                <p>速さ v₂: <strong id="refractionV2"></strong> (v₁=1)</p>
+                                <p>波長 λ₂: <strong id="refractionL2"></strong> (λ₁=1)</p>
+                             </div>
+                        </div>
+                        <div class="md:col-span-2 mt-4">
+                             <h4 class="text-lg font-semibold mb-2 text-center">全反射 (Total Internal Reflection)</h4>
+                             <canvas id="totalInternalReflectionCanvas" class="w-full h-64 animation-canvas"></canvas>
+                             <div class="grid md:grid-cols-2 gap-4 mt-2">
+                                <div>
+                                    <label for="tirN1Slider" class="text-sm font-semibold">媒質1の屈折率 (n₁): <span id="tirN1Value">1.5</span></label>
+                                    <input id="tirN1Slider" type="range" min="1.0" max="2.5" value="1.5" step="0.1" class="w-full">
+                                </div>
+                                <div>
+                                    <label for="tirN2Slider" class="text-sm font-semibold">媒質2の屈折率 (n₂): <span id="tirN2Value">1.0</span></label>
+                                    <input id="tirN2Slider" type="range" min="1.0" max="2.5" value="1.0" step="0.1" class="w-full">
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label for="tirAngleSlider" class="text-sm font-semibold">入射角 (i): <span id="tirAngleValue">30</span>°</label>
+                                <input id="tirAngleSlider" type="range" min="0" max="89" value="30" class="w-full">
+                            </div>
+                            <div class="mt-2 formula-box text-center">臨界角の条件: sin(θc) = n₂ / n₁  (n₁ > n₂)</div>
+                            <div id="tirInfo" class="mt-2 p-2 bg-gray-100 rounded-lg text-center text-xs grid grid-cols-2 gap-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-center">反射の種類 (端での反射)</h3>
+                    <canvas id="reflectionCanvas" class="w-full h-48 animation-canvas"></canvas>
+                    <div class="flex justify-center space-x-4 mt-2">
+                        <button id="fixedEndBtn" class="px-4 py-2 bg-teal-500 text-white rounded-lg control-button">固定端反射</button>
+                        <button id="freeEndBtn" class="px-4 py-2 bg-gray-400 text-white rounded-lg control-button">自由端反射</button>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">固定端では波の山と谷が反転（位相がπずれる）、自由端ではそのまま（位相が変わらない）反射します。</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-center">回折 (Diffraction)</h3>
+                    <canvas id="diffractionCanvas" class="w-full h-48 animation-canvas"></canvas>
+                    <div class="mt-2 px-2">
+                        <label for="slitSlider" class="text-sm font-semibold">隙間の幅 (d): <span id="slitValue">50</span></label>
+                        <input id="slitSlider" type="range" min="10" max="150" value="50" class="w-full">
+                        <label for="wavelengthSliderDiffraction" class="text-sm font-semibold">波長 (λ): <span id="wavelengthValueDiffraction">30</span></label>
+                        <input id="wavelengthSliderDiffraction" type="range" min="10" max="80" value="30" class="w-full">
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2 formula-box text-center">d ≦ λ のとき顕著</p>
+                    <p class="text-sm text-gray-600 mt-1">波は障害物の後ろに回り込みます。隙間の幅が波長と同程度かそれ以下のとき、この現象は顕著になります。</p>
+                </div>
+                 <div class="md:col-span-2 mt-8">
+                    <h3 class="text-xl font-semibold mb-2 text-center">干渉 (Interference)</h3>
+                    <canvas id="interferenceCanvas" class="w-full h-64 animation-canvas"></canvas>
+                     <div class="flex justify-center space-x-4 mt-2">
+                        <button id="interferenceStartBtn" class="px-4 py-2 bg-teal-500 text-white rounded-lg control-button">干渉を再生</button>
+                        <button id="interferenceStopBtn" class="px-4 py-2 bg-gray-400 text-white rounded-lg control-button">停止</button>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">2つの波源からの波が重なると、強め合ったり（明るい線）、弱め合ったり（暗い線）する縞模様ができます。これは2つの波源からの距離の差によって決まります。</p>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="formula-box">
+                            <h4 class="font-bold text-center">強め合う条件 (建設的干渉)</h4>
+                            <p class="text-center text-lg mt-2">|L₁ - L₂| = mλ</p>
+                            <p class="text-center text-sm">(m = 0, 1, 2, ...)</p>
+                        </div>
+                        <div class="formula-box">
+                            <h4 class="font-bold text-center">弱め合う条件 (破壊的干渉)</h4>
+                            <p class="text-center text-lg mt-2">|L₁ - L₂| = (m + 1/2)λ</p>
+                             <p class="text-center text-sm">(m = 0, 1, 2, ...)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:col-span-2 mt-8">
+                    <h3 class="text-xl font-semibold mb-2 text-center">ホイヘンスの原理</h3>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2 text-center">平面波</h4>
+                            <canvas id="huygensCanvas" class="w-full h-64 animation-canvas"></canvas>
+                             <div class="mt-2">
+                                <label for="huygensPlaneSourcesSlider" class="text-sm font-semibold">素元波の数: <span id="huygensPlaneSourcesValue">5</span></label>
+                                <input id="huygensPlaneSourcesSlider" type="range" min="1" max="20" value="5" class="w-full">
+                            </div>
+                            <div class="flex justify-center items-center space-x-4 mt-2">
+                                <button id="huygensPlanePlayPauseBtn" class="px-4 py-2 bg-teal-500 text-white rounded-lg control-button w-24">再生</button>
+                                <button id="huygensPlaneResetBtn" class="px-4 py-2 bg-gray-400 text-white rounded-lg control-button">リセット</button>
+                            </div>
+                            <div class="mt-2">
+                                <label for="huygensPlaneTimeSlider" class="text-sm font-semibold">時間操作</label>
+                                <input id="huygensPlaneTimeSlider" type="range" min="0" max="80" value="0" step="1" class="w-full">
+                            </div>
+                        </div>
+                        <div>
+                             <h4 class="text-lg font-semibold mb-2 text-center">球面波</h4>
+                             <canvas id="sphericalWaveCanvas" class="w-full h-64 animation-canvas"></canvas>
+                             <div class="mt-2">
+                                <label for="huygensSphericalSourcesSlider" class="text-sm font-semibold">素元波の数: <span id="huygensSphericalSourcesValue">10</span></label>
+                                <input id="huygensSphericalSourcesSlider" type="range" min="3" max="40" value="10" class="w-full">
+                            </div>
+                             <div class="flex justify-center items-center space-x-4 mt-2">
+                                <button id="huygensSphericalPlayPauseBtn" class="px-4 py-2 bg-teal-500 text-white rounded-lg control-button w-24">再生</button>
+                                <button id="huygensSphericalResetBtn" class="px-4 py-2 bg-gray-400 text-white rounded-lg control-button">リセット</button>
+                            </div>
+                            <div class="mt-2">
+                                <label for="huygensSphericalTimeSlider" class="text-sm font-semibold">時間操作</label>
+                                <input id="huygensSphericalTimeSlider" type="range" min="0" max="80" value="0" step="1" class="w-full">
+                            </div>
+                        </div>
+                    </div>
+                     <p class="text-sm text-gray-600 mt-2">波面の各点が新しい波源（<strong class="text-orange-500">素元波</strong>）となり、それらの波が重なり合うことで、次の瞬間の新しい波面（<strong class="text-teal-600">合成波面</strong>）が作られるという原理です。</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-6 bg-gray-100 mt-16">
+        <p class="text-gray-500">インタラクティブ物理学習 | 波の性質</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        let globalTime = 0;
+        function masterAnimate() {
+            globalTime += 0.05;
+            
+            // Section 1 animations
+            drawTransverseWave(globalTime);
+            drawLongitudinalWave(globalTime);
+
+            // Section 3 animations
+            animateReflection();
+            animateDiffraction(globalTime);
+            animateComparisonWaves(globalTime);
+            drawReflectionLaw(globalTime);
+            drawRefractionLaw(globalTime);
+            drawTotalInternalReflection();
+            
+            requestAnimationFrame(masterAnimate);
+        }
+
+        // Smooth scrolling for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        function drawArrow(ctx, fromx, fromy, tox, toy, color) {
+            const headlen = 10;
+            const dx = tox - fromx;
+            const dy = toy - fromy;
+            const angle = Math.atan2(dy, dx);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(fromx, fromy);
+            ctx.lineTo(tox, toy);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.stroke();
+        }
+
+        // Section 1: Wave Types
+        const transverseCanvas = document.getElementById('transverseWaveCanvas');
+        const tCtx = transverseCanvas.getContext('2d');
+        const longitudinalCanvas = document.getElementById('longitudinalWaveCanvas');
+        const lCtx = longitudinalCanvas.getContext('2d');
+        const particleColors = ['#ef4444', '#f97316', '#eab308', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280', '#78350f'];
+
+        function drawTransverseWave(time) {
+            const w = transverseCanvas.width;
+            const h = transverseCanvas.height;
+            tCtx.clearRect(0, 0, w, h);
+
+            tCtx.strokeStyle = '#e5e7eb';
+            tCtx.lineWidth = 1;
+            tCtx.beginPath();
+            tCtx.moveTo(0, h / 2);
+            tCtx.lineTo(w, h / 2);
+            for (let i = 1; i < 10; i++) {
+                const x = w / 10 * i;
+                tCtx.moveTo(x, 0);
+                tCtx.lineTo(x, h);
+            }
+            tCtx.stroke();
+
+            tCtx.strokeStyle = '#0d9488';
+            tCtx.lineWidth = 2;
+            tCtx.beginPath();
+            for (let x = 0; x < w; x++) {
+                const y = h / 2 + Math.sin(x * 0.1 - time) * (h / 4);
+                tCtx.lineTo(x, y);
+            }
+            tCtx.stroke();
+            
+            for (let i = 0; i < 10; i++) {
+                const px = w / 10 * (i + 0.5);
+                const py = h / 2 + Math.sin(px * 0.1 - time) * (h / 4);
+                tCtx.fillStyle = particleColors[i];
+                tCtx.beginPath();
+                tCtx.arc(px, py, 5, 0, 2 * Math.PI);
+                tCtx.fill();
+            }
+        }
+
+        function drawLongitudinalWave(time) {
+            const w = longitudinalCanvas.width;
+            const h = longitudinalCanvas.height;
+            lCtx.clearRect(0, 0, w, h);
+            for (let i = 0; i < 10; i++) {
+                lCtx.fillStyle = particleColors[i];
+                const baseX = w / 10 * (i + 0.5);
+                const offsetX = Math.sin(baseX * 0.1 - time) * 15;
+                lCtx.beginPath();
+                lCtx.arc(baseX + offsetX, h / 2, 5, 0, 2 * Math.PI);
+                lCtx.fill();
+            }
+        }
+        
+        // Section 2: Wave Basics Charts
+        const amplitudeSlider = document.getElementById('amplitudeSlider');
+        const wavelengthSlider = document.getElementById('wavelengthSlider');
+        const periodSlider = document.getElementById('periodSlider');
+        const amplitudeValue = document.getElementById('amplitudeValue');
+        const wavelengthValue = document.getElementById('wavelengthValue');
+        const periodSliderValue = document.getElementById('periodSliderValue');
+        const speedValue = document.getElementById('speedValue');
+        const periodValue = document.getElementById('periodValue');
+        const frequencyValue = document.getElementById('frequencyValue');
+
+        const waveChartCanvas = document.getElementById('waveChart');
+        const timeChartCanvas = document.getElementById('timeChart');
+        const wave3dDiv = document.getElementById('wave3dChart');
+
+        const waveChart = new Chart(waveChartCanvas, {
+            type: 'line',
+            data: { labels: [], datasets: [{ data: [], borderColor: '#0d9488', borderWidth: 2, pointRadius: 0, tension: 0.1 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { title: { display: true, text: '変位 [m]' }}, x: { title: { display: true, text: '位置 [m]' }}}, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+        });
+
+        const timeChart = new Chart(timeChartCanvas, {
+            type: 'line',
+            data: { labels: [], datasets: [{ data: [], borderColor: '#db2777', borderWidth: 2, pointRadius: 0, tension: 0.1 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { title: { display: true, text: '変位 [m]' }}, x: { title: { display: true, text: '時間 [s]' }}}, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+        });
+
+        function updateAllCharts() {
+            const A = parseFloat(amplitudeSlider.value);
+            const lambda = parseFloat(wavelengthSlider.value);
+            const T = parseFloat(periodSlider.value);
+            const f = 1 / T;
+            const v = f * lambda;
+
+            amplitudeValue.textContent = A.toFixed(2);
+            wavelengthValue.textContent = lambda.toFixed(1);
+            periodSliderValue.textContent = T.toFixed(1);
+            speedValue.textContent = v.toFixed(2);
+            periodValue.textContent = T.toFixed(2);
+            frequencyValue.textContent = f.toFixed(2);
+
+            // Update y-x chart
+            const yx_labels = [];
+            const yx_data = [];
+            for (let x = 0; x <= 10; x += 0.2) {
+                yx_labels.push(x.toFixed(1));
+                yx_data.push(A * Math.sin(2 * Math.PI * (0/T - x/lambda)));
+            }
+            waveChart.data.labels = yx_labels;
+            waveChart.data.datasets[0].data = yx_data;
+            waveChart.options.scales.y.min = -A * 1.2;
+            waveChart.options.scales.y.max = A * 1.2;
+            waveChart.update('none');
+
+            // Update y-t chart
+            const yt_labels = [];
+            const yt_data = [];
+            const maxTime = T * 2 > 4 ? T * 2 : 4;
+            for (let t = 0; t <= maxTime; t += 0.1) {
+                yt_labels.push(t.toFixed(1));
+                yt_data.push(A * Math.sin(2 * Math.PI * (t/T - 0/lambda)));
+            }
+            timeChart.data.labels = yt_labels;
+            timeChart.data.datasets[0].data = yt_data;
+            timeChart.options.scales.y.min = -A * 1.2;
+            timeChart.options.scales.y.max = A * 1.2;
+            timeChart.update('none');
+
+            // Update 3D chart
+            const x_data_3d = [], t_data_3d = [], z_data_3d = [];
+            for (let x = 0; x <= 10; x += 0.5) { x_data_3d.push(x); }
+            for (let t = 0; t <= 4; t += 0.2) { t_data_3d.push(t); }
+
+            for (let i = 0; i < t_data_3d.length; i++) {
+                let row = [];
+                for (let j = 0; j < x_data_3d.length; j++) {
+                    row.push(A * Math.sin(2 * Math.PI * (t_data_3d[i] / T - x_data_3d[j] / lambda)));
+                }
+                z_data_3d.push(row);
+            }
+            
+            const data_3d = [{
+                z: z_data_3d,
+                x: x_data_3d,
+                y: t_data_3d,
+                type: 'surface',
+                colorscale: 'Viridis'
+            }];
+
+            Plotly.react(wave3dDiv, data_3d, {
+                autosize: true,
+                margin: { l: 40, r: 20, b: 40, t: 20 },
+                scene: {
+                    xaxis: { title: '位置 x [m]' },
+                    yaxis: { title: '時間 t [s]' },
+                    zaxis: { title: '変位 y [m]', range: [-A*1.2, A*1.2] },
+                    camera: { eye: { x: -1.5, y: -1.5, z: 1.2 } }
+                }
+            }, {responsive: true});
+        }
+        
+        amplitudeSlider.addEventListener('input', updateAllCharts);
+        wavelengthSlider.addEventListener('input', updateAllCharts);
+        periodSlider.addEventListener('input', updateAllCharts);
+        
+        updateAllCharts();
+
+        // ========== ここから位相差スクリプト ==========
+        // Section 2: Phase Difference
+        const phaseCanvas = document.getElementById('phaseDifferenceCanvas');
+        const pCtx = phaseCanvas.getContext('2d');
+        const phaseSlider = document.getElementById('phaseSlider');
+        const phaseValue = document.getElementById('phaseValue');
+        const phaseStatus = document.getElementById('phaseStatus');
+        const phaseFormulaValue = document.getElementById('phaseFormulaValue');
+        const phaseSign = document.getElementById('phaseSign');
+
+        function getPiFraction(value) {
+            const absValue = Math.abs(value);
+            let fraction = "";
+            if (absValue < 0.02) fraction = "0";
+            else if (Math.abs(absValue - Math.PI / 2) < 0.02) fraction = "π/2";
+            else if (Math.abs(absValue - Math.PI) < 0.02) fraction = "π";
+            else fraction = (absValue / Math.PI).toFixed(2) + "π";
+            
+            return (value < 0 ? "-" : "") + fraction;
+        }
+
+        function drawPhaseDifference() {
+            const w = phaseCanvas.width;
+            const h = phaseCanvas.height;
+            pCtx.clearRect(0, 0, w, h);
+
+            const phase = parseFloat(phaseSlider.value);
+            
+            // Update UI text and formula
+            phaseValue.textContent = `${phase.toFixed(2)} rad (${getPiFraction(phase)})`;
+            phaseFormulaValue.textContent = Math.abs(phase).toFixed(2);
+            phaseSign.textContent = phase < 0 ? ' - ' : ' + ';
+
+            // Update status text
+            if (Math.abs(phase) < 0.02) {
+                phaseStatus.textContent = '同位相 (In Phase)';
+            } else if (Math.abs(Math.abs(phase) - Math.PI) < 0.02) {
+                phaseStatus.textContent = '逆位相 (Antiphase)';
+            } else if (phase > 0) {
+                phaseStatus.textContent = '位相が進んでいる (Leading)';
+            } else {
+                phaseStatus.textContent = '位相が遅れている (Lagging)';
+            }
+
+            const amplitude = h / 3;
+            const frequency = 2; // kxに相当
+
+            // Draw reference wave (blue)
+            pCtx.strokeStyle = 'rgba(59, 130, 246, 0.8)'; // #3b82f6
+            pCtx.lineWidth = 2;
+            pCtx.beginPath();
+            for (let x = 0; x < w; x++) {
+                const y = h / 2 - amplitude * Math.sin(2 * Math.PI * frequency * (x / w));
+                pCtx.lineTo(x, y);
+            }
+            pCtx.stroke();
+
+            // Draw phase-shifted wave (pink)
+            pCtx.strokeStyle = 'rgba(236, 72, 153, 0.9)'; // #ec4899
+            pCtx.lineWidth = 3;
+            pCtx.beginPath();
+            for (let x = 0; x < w; x++) {
+                const y = h / 2 - amplitude * Math.sin(2 * Math.PI * frequency * (x / w) + phase);
+                pCtx.lineTo(x, y);
+            }
+            pCtx.stroke();
+        }
+
+        phaseSlider.addEventListener('input', drawPhaseDifference);
+        drawPhaseDifference();
+        // ========== ここまで位相差スクリプト ==========
+
+
+        // Section 3: Wave Properties
+        // Superposition
+        const superpositionCanvas = document.getElementById('superpositionCanvas');
+        const sCtx = superpositionCanvas.getContext('2d');
+        const superpositionPlayPauseBtn = document.getElementById('superpositionPlayPauseBtn');
+        const superpositionResetBtn = document.getElementById('superpositionResetBtn');
+        const superpositionTimeSlider = document.getElementById('superpositionTimeSlider');
+        let superpositionAnimFrame;
+        let isSuperpositionPlaying = false;
+        const SIMULATION_DURATION = 200;
+        const PULSE_WIDTH = 50;
+
+        function drawSuperposition(time) {
+            const w = superpositionCanvas.width;
+            const h = superpositionCanvas.height;
+            sCtx.clearRect(0, 0, w, h);
+            
+            sCtx.strokeStyle = '#9ca3af';
+            sCtx.lineWidth = 1;
+            sCtx.beginPath();
+            sCtx.moveTo(0, h/2);
+            sCtx.lineTo(w, h/2);
+            sCtx.stroke();
+
+            const initialX1 = w * 0.2;
+            const initialX2 = w * 0.8;
+            const velocity = (w * 0.6) / SIMULATION_DURATION;
+
+            const pulse1 = { x: initialX1 + velocity * time, w: PULSE_WIDTH, a: h / 4 };
+            const pulse2 = { x: initialX2 - velocity * time, w: PULSE_WIDTH, a: -h / 4 };
+
+            const getPulseY = (x, pulse) => {
+                if (x > pulse.x - pulse.w / 2 && x < pulse.x + pulse.w / 2) {
+                    return pulse.a * Math.sin(Math.PI * (x - (pulse.x - pulse.w / 2)) / pulse.w);
+                }
+                return 0;
+            };
+
+            sCtx.lineWidth = 2;
+            sCtx.setLineDash([5, 5]);
+            sCtx.strokeStyle = 'blue';
+            sCtx.beginPath();
+            for (let x = 0; x < w; x++) { sCtx.lineTo(x, h / 2 - getPulseY(x, pulse1)); }
+            sCtx.stroke();
+            
+            sCtx.strokeStyle = 'green';
+            sCtx.beginPath();
+            for (let x = 0; x < w; x++) { sCtx.lineTo(x, h / 2 - getPulseY(x, pulse2)); }
+            sCtx.stroke();
+
+            sCtx.strokeStyle = 'black';
+            sCtx.lineWidth = 3;
+            sCtx.setLineDash([]);
+            sCtx.beginPath();
+            for (let x = 0; x < w; x++) {
+                const y1 = getPulseY(x, pulse1);
+                const y2 = getPulseY(x, pulse2);
+                sCtx.lineTo(x, h / 2 - (y1 + y2));
+            }
+            sCtx.stroke();
+        }
+
+        function runSuperpositionAnimation() {
+            let currentTime = parseFloat(superpositionTimeSlider.value);
+            if (currentTime >= SIMULATION_DURATION) {
+                currentTime = 0;
+            }
+            
+            currentTime++;
+            
+            superpositionTimeSlider.value = currentTime;
+            drawSuperposition(currentTime);
+
+            if (isSuperpositionPlaying) {
+                superpositionAnimFrame = requestAnimationFrame(runSuperpositionAnimation);
+            }
+        }
+
+        superpositionPlayPauseBtn.addEventListener('click', () => {
+            isSuperpositionPlaying = !isSuperpositionPlaying;
+            if (isSuperpositionPlaying) {
+                superpositionPlayPauseBtn.textContent = '一時停止';
+                runSuperpositionAnimation();
+            } else {
+                superpositionPlayPauseBtn.textContent = '再生';
+                cancelAnimationFrame(superpositionAnimFrame);
+            }
+        });
+        
+        superpositionResetBtn.addEventListener('click', () => {
+            isSuperpositionPlaying = false;
+            superpositionPlayPauseBtn.textContent = '再生';
+            cancelAnimationFrame(superpositionAnimFrame);
+            superpositionTimeSlider.value = 0;
+            drawSuperposition(0);
+        });
+
+        superpositionTimeSlider.addEventListener('input', (e) => {
+            if (isSuperpositionPlaying) {
+                isSuperpositionPlaying = false;
+                superpositionPlayPauseBtn.textContent = '再生';
+                cancelAnimationFrame(superpositionAnimFrame);
+            }
+            drawSuperposition(parseFloat(e.target.value));
+        });
+
+        drawSuperposition(0);
+
+        // Standing and Traveling Waves
+        const travelingWaveCanvas = document.getElementById('travelingWaveCanvas');
+        const twCtx = travelingWaveCanvas.getContext('2d');
+        const standingWaveCanvas = document.getElementById('standingWaveCanvas');
+        const swCtx = standingWaveCanvas.getContext('2d');
+
+        function animateComparisonWaves(time) {
+            // Traveling Wave
+            const tw_w = travelingWaveCanvas.width;
+            const tw_h = travelingWaveCanvas.height;
+            twCtx.clearRect(0,0,tw_w, tw_h);
+            twCtx.strokeStyle = '#0d9488';
+            twCtx.lineWidth = 2;
+            twCtx.beginPath();
+            for(let x=0; x<tw_w; x++) {
+                const y = tw_h/2 + Math.sin(x * 0.05 - time) * (tw_h/3);
+                twCtx.lineTo(x,y);
+            }
+            twCtx.stroke();
+
+            // Standing Wave
+            const sw_w = standingWaveCanvas.width;
+            const sw_h = standingWaveCanvas.height;
+            swCtx.clearRect(0,0,sw_w, sw_h);
+            
+            const k = 0.05;
+            const amp = sw_h / 6;
+
+            // Draw component waves
+            swCtx.lineWidth = 1;
+            swCtx.setLineDash([4, 4]);
+            swCtx.strokeStyle = 'blue';
+            swCtx.beginPath();
+            for(let x=0; x<sw_w; x++) {
+                const y = sw_h/2 + Math.sin(x * k - time) * amp;
+                swCtx.lineTo(x,y);
+            }
+            swCtx.stroke();
+            swCtx.strokeStyle = 'green';
+            swCtx.beginPath();
+            for(let x=0; x<sw_w; x++) {
+                const y = sw_h/2 + Math.sin(x * k + time) * amp;
+                swCtx.lineTo(x,y);
+            }
+            swCtx.stroke();
+            swCtx.setLineDash([]);
+            
+            // Draw standing wave
+            swCtx.strokeStyle = 'black';
+            swCtx.lineWidth = 3;
+            swCtx.beginPath();
+            for(let x=0; x<sw_w; x++) {
+                const y1 = Math.sin(x * k - time) * amp;
+                const y2 = Math.sin(x * k + time) * amp;
+                swCtx.lineTo(x, sw_h/2 + y1 + y2);
+            }
+            swCtx.stroke();
+            
+            const lambda_sw = 2 * Math.PI / k;
+            
+            // Draw nodes
+            swCtx.fillStyle = 'red';
+            for(let i=0; i < (sw_w / (lambda_sw / 2)) + 1; i++) {
+                const x = i * (lambda_sw / 2);
+                if (x <= sw_w) {
+                    swCtx.beginPath();
+                    swCtx.arc(x, sw_h/2, 4, 0, 2*Math.PI);
+                    swCtx.fill();
+                }
+            }
+
+            // Draw antinodes
+            swCtx.fillStyle = 'blue';
+            for(let i=0; i < sw_w / (lambda_sw / 2); i++) {
+                const x = (i + 0.5) * (lambda_sw / 2);
+                if (x <= sw_w) {
+                    const y1 = Math.sin(x * k - time) * amp;
+                    const y2 = Math.sin(x * k + time) * amp;
+                    const y = sw_h/2 + y1 + y2;
+                    swCtx.beginPath();
+                    swCtx.arc(x, y, 5, 0, 2*Math.PI);
+                    swCtx.fill();
+                }
+            }
+        }
+        
+        // Reflection Law
+        const reflectionLawCanvas = document.getElementById('reflectionLawCanvas');
+        const rlCtx = reflectionLawCanvas.getContext('2d');
+        const reflectionAngleSlider = document.getElementById('reflectionAngleSlider');
+
+        function drawReflectionLaw(time) {
+            const w = reflectionLawCanvas.width;
+            const h = reflectionLawCanvas.height;
+            const angleDeg = parseFloat(reflectionAngleSlider.value);
+            document.getElementById('reflectionAngleValue').textContent = angleDeg;
+            const iRad = angleDeg * Math.PI / 180;
+            const rRad = iRad;
+            const origin = { x: w / 2, y: h * 0.7 };
+
+            rlCtx.clearRect(0, 0, w, h);
+
+            // Draw Rays
+            const rayLength = h * 0.6;
+            drawArrow(rlCtx, origin.x - rayLength * Math.sin(iRad), origin.y - rayLength * Math.cos(iRad), origin.x, origin.y, 'red');
+            drawArrow(rlCtx, origin.x, origin.y, origin.x + rayLength * Math.sin(rRad), origin.y - rayLength * Math.cos(rRad), 'orange');
+
+            // Draw surface and normal
+            rlCtx.strokeStyle = 'black';
+            rlCtx.lineWidth = 2;
+            rlCtx.beginPath();
+            rlCtx.moveTo(0, origin.y);
+            rlCtx.lineTo(w, origin.y);
+            rlCtx.stroke();
+            rlCtx.strokeStyle = 'gray';
+            rlCtx.lineWidth = 1;
+            rlCtx.setLineDash([5, 5]);
+            rlCtx.beginPath();
+            rlCtx.moveTo(origin.x, origin.y);
+            rlCtx.lineTo(origin.x, 0);
+            rlCtx.stroke();
+            rlCtx.setLineDash([]);
+        }
+        reflectionAngleSlider.addEventListener('input', () => drawReflectionLaw(globalTime));
+
+        // Refraction Law
+        const refractionLawCanvas = document.getElementById('refractionLawCanvas');
+        const refrCtx = refractionLawCanvas.getContext('2d');
+        const refractionAngleSlider = document.getElementById('refractionAngleSlider');
+        const refractionN2Slider = document.getElementById('refractionN2Slider');
+        const refractionAngleR = document.getElementById('refractionAngleR');
+        const refractionN12 = document.getElementById('refractionN12');
+        const refractionV2 = document.getElementById('refractionV2');
+        const refractionL2 = document.getElementById('refractionL2');
+
+        function drawRefractionLaw(time) {
+            const w = refractionLawCanvas.width;
+            const h = refractionLawCanvas.height;
+            const iDeg = parseFloat(refractionAngleSlider.value);
+            const iRad = iDeg * Math.PI / 180;
+            const n1 = 1.0;
+            const n2 = parseFloat(refractionN2Slider.value);
+            
+            document.getElementById('refractionAngleValue').textContent = iDeg;
+            document.getElementById('refractionN2Value').textContent = n2.toFixed(1);
+
+            const origin = { x: w / 2, y: h / 2 };
+
+            refrCtx.clearRect(0, 0, w, h);
+            
+            refrCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            refrCtx.fillRect(0, 0, w, origin.y);
+            refrCtx.fillStyle = 'rgba(100, 149, 237, 0.1)';
+            refrCtx.fillRect(0, origin.y, w, h - origin.y);
+            refrCtx.fillStyle = 'black';
+            refrCtx.fillText('媒質1 (n₁=1.0)', 10, 20);
+            refrCtx.fillText(`媒質2 (n₂=${n2.toFixed(1)})`, 10, h - 10);
+
+            // Draw boundary and normal
+            refrCtx.strokeStyle = 'black';
+            refrCtx.lineWidth = 1;
+            refrCtx.beginPath();
+            refrCtx.moveTo(0, origin.y);
+            refrCtx.lineTo(w, origin.y);
+            refrCtx.stroke();
+            refrCtx.strokeStyle = 'gray';
+            refrCtx.setLineDash([5, 5]);
+            refrCtx.beginPath();
+            refrCtx.moveTo(origin.x, 0);
+            refrCtx.lineTo(origin.x, h);
+            refrCtx.stroke();
+            refrCtx.setLineDash([]);
+            
+            // Draw Rays
+            const rayLength = h * 0.45;
+            drawArrow(refrCtx, origin.x - rayLength * Math.sin(iRad), origin.y - rayLength * Math.cos(iRad), origin.x, origin.y, 'red');
+            const sinR = (n1 / n2) * Math.sin(iRad);
+
+            const v1 = 1.0;
+            const lambda1 = 1.0;
+            const n12 = n2 / n1;
+            const v2 = v1 / n12;
+            const lambda2 = lambda1 / n12;
+
+            refractionN12.textContent = n12.toFixed(2);
+            refractionV2.textContent = v2.toFixed(2);
+            refractionL2.textContent = lambda2.toFixed(2);
+
+            if (sinR >= 1) { // Total Internal Reflection
+                drawArrow(refrCtx, origin.x, origin.y, origin.x + rayLength * Math.sin(iRad), origin.y - rayLength * Math.cos(iRad), 'orange');
+                refractionAngleR.textContent = "全反射";
+            } else {
+                const rRad = Math.asin(sinR);
+                refractionAngleR.textContent = (rRad * 180 / Math.PI).toFixed(1);
+                drawArrow(refrCtx, origin.x, origin.y, origin.x + rayLength * Math.sin(rRad), origin.y + rayLength * Math.cos(rRad), 'purple');
+            }
+        }
+        refractionAngleSlider.addEventListener('input', () => drawRefractionLaw(globalTime));
+        refractionN2Slider.addEventListener('input', () => drawRefractionLaw(globalTime));
+        
+        // Total Internal Reflection
+        const tirCanvas = document.getElementById('totalInternalReflectionCanvas');
+        const tirCtx = tirCanvas.getContext('2d');
+        const tirN1Slider = document.getElementById('tirN1Slider');
+        const tirN2Slider = document.getElementById('tirN2Slider');
+        const tirAngleSlider = document.getElementById('tirAngleSlider');
+        const tirN1Value = document.getElementById('tirN1Value');
+        const tirN2Value = document.getElementById('tirN2Value');
+        const tirAngleValue = document.getElementById('tirAngleValue');
+        const tirInfo = document.getElementById('tirInfo');
+
+        function drawTotalInternalReflection() {
+            const w = tirCanvas.width;
+            const h = tirCanvas.height;
+            const n1 = parseFloat(tirN1Slider.value);
+            const n2 = parseFloat(tirN2Slider.value);
+            const iDeg = parseFloat(tirAngleSlider.value);
+            const iRad = iDeg * Math.PI / 180;
+            
+            tirN1Value.textContent = n1.toFixed(1);
+            tirN2Value.textContent = n2.toFixed(1);
+            tirAngleValue.textContent = iDeg;
+
+            const origin = { x: w / 2, y: h / 2 };
+
+            tirCtx.clearRect(0, 0, w, h);
+            
+            tirCtx.fillStyle = 'rgba(100, 149, 237, 0.1)';
+            tirCtx.fillRect(0, 0, w, origin.y);
+            tirCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            tirCtx.fillRect(0, origin.y, w, h - origin.y);
+            tirCtx.fillStyle = 'black';
+            tirCtx.fillText(`媒質1 (n₁=${n1.toFixed(1)})`, 10, h - 10);
+            tirCtx.fillText(`媒質2 (n₂=${n2.toFixed(1)})`, 10, 20);
+
+            tirCtx.strokeStyle = 'black';
+            tirCtx.lineWidth = 1;
+            tirCtx.beginPath();
+            tirCtx.moveTo(0, origin.y);
+            tirCtx.lineTo(w, origin.y);
+            tirCtx.stroke();
+            tirCtx.strokeStyle = 'gray';
+            tirCtx.setLineDash([5, 5]);
+            tirCtx.beginPath();
+            tirCtx.moveTo(origin.x, 0);
+            tirCtx.lineTo(origin.x, h);
+            tirCtx.stroke();
+            tirCtx.setLineDash([]);
+            
+            const rayLength = h * 0.45;
+            drawArrow(tirCtx, origin.x - rayLength * Math.sin(iRad), origin.y + rayLength * Math.cos(iRad), origin.x, origin.y, 'red');
+
+            if (n1 <= n2) {
+                tirInfo.innerHTML = `<p class="md:col-span-2 text-red-600">全反射は起こりません (n₁ > n₂ が必要)</p>`;
+                const rRad = Math.asin((n1 / n2) * Math.sin(iRad));
+                const rDeg = (rRad * 180 / Math.PI).toFixed(1);
+                tirInfo.innerHTML += `<p>屈折角 r: <strong>${rDeg}°</strong></p>`;
+                drawArrow(tirCtx, origin.x, origin.y, origin.x + rayLength * Math.sin(rRad), origin.y - rayLength * Math.cos(rRad), 'purple');
+                return;
+            }
+
+            const criticalAngleRad = Math.asin(n2 / n1);
+            const criticalAngleDeg = (criticalAngleRad * 180 / Math.PI).toFixed(1);
+            
+            if (iRad < criticalAngleRad) {
+                const rRad = Math.asin((n1 / n2) * Math.sin(iRad));
+                const rDeg = (rRad * 180 / Math.PI).toFixed(1);
+                tirInfo.innerHTML = `<p>臨界角 θc: <strong>${criticalAngleDeg}°</strong></p><p>屈折角 r: <strong>${rDeg}°</strong></p>`;
+                drawArrow(tirCtx, origin.x, origin.y, origin.x + rayLength * Math.sin(rRad), origin.y - rayLength * Math.cos(rRad), 'purple');
+                drawArrow(tirCtx, origin.x, origin.y, origin.x + rayLength * Math.sin(iRad), origin.y + rayLength * Math.cos(iRad), 'orange');
+            } else {
+                tirInfo.innerHTML = `<p class="md:col-span-2 text-teal-600 font-bold">全反射発生中 (i ≥ θc)</p><p>反射角 r: <strong>${iDeg}°</strong></p><p>臨界角 θc: <strong>${criticalAngleDeg}°</strong></p>`;
+                drawArrow(tirCtx, origin.x, origin.y, origin.x + rayLength * Math.sin(iRad), origin.y + rayLength * Math.cos(iRad), 'orange');
+            }
+        }
+        tirN1Slider.addEventListener('input', drawTotalInternalReflection);
+        tirN2Slider.addEventListener('input', drawTotalInternalReflection);
+        tirAngleSlider.addEventListener('input', drawTotalInternalReflection);
+        drawTotalInternalReflection();
+
+
+        // Reflection (End)
+        const reflectionCanvas = document.getElementById('reflectionCanvas');
+        const rCtx = reflectionCanvas.getContext('2d');
+        const fixedEndBtn = document.getElementById('fixedEndBtn');
+        const freeEndBtn = document.getElementById('freeEndBtn');
+        let reflectionMode = 'fixed';
+        let pulseX = -50;
+        let pulseReflected = false;
+        
+        fixedEndBtn.addEventListener('click', () => {
+            reflectionMode = 'fixed';
+            resetReflection();
+            fixedEndBtn.classList.replace('bg-gray-400', 'bg-teal-500');
+            freeEndBtn.classList.replace('bg-teal-500', 'bg-gray-400');
+        });
+        freeEndBtn.addEventListener('click', () => {
+            reflectionMode = 'free';
+            resetReflection();
+            freeEndBtn.classList.replace('bg-gray-400', 'bg-teal-500');
+            fixedEndBtn.classList.replace('bg-teal-500', 'bg-gray-400');
+        });
+
+        function resetReflection() {
+            pulseX = -50;
+            pulseReflected = false;
+        }
+
+        function drawPulse(x, inverted) {
+            const w = reflectionCanvas.width;
+            const h = reflectionCanvas.height;
+            const pulseWidth = 80;
+            const amplitude = inverted ? -h / 4 : h / 4;
+            rCtx.beginPath();
+            for (let i = 0; i <= pulseWidth; i++) {
+                const currentX = x - pulseWidth / 2 + i;
+                const y = h / 2 - amplitude * Math.sin((Math.PI * i) / pulseWidth);
+                rCtx.lineTo(currentX, y);
+            }
+            rCtx.stroke();
+        }
+
+        function animateReflection() {
+            const w = reflectionCanvas.width;
+            const h = reflectionCanvas.height;
+            rCtx.clearRect(0, 0, w, h);
+            rCtx.strokeStyle = '#0d9488';
+            rCtx.lineWidth = 2;
+
+            rCtx.beginPath();
+            rCtx.moveTo(0, h/2);
+            rCtx.lineTo(w, h/2);
+            rCtx.stroke();
+
+            rCtx.fillStyle = '#14b8a6';
+            rCtx.fillRect(w - 5, 0, 5, h);
+
+            if (!pulseReflected) {
+                pulseX += 2;
+                drawPulse(pulseX, false);
+                if (pulseX > w - 40) {
+                    pulseReflected = true;
+                }
+            } else {
+                pulseX -= 2;
+                const inverted = (reflectionMode === 'fixed');
+                drawPulse(pulseX, inverted);
+                if (pulseX < -50) {
+                    resetReflection();
+                }
+            }
+        }
+        
+        // Diffraction
+        const diffractionCanvas = document.getElementById('diffractionCanvas');
+        const dCtx = diffractionCanvas.getContext('2d');
+        const slitSlider = document.getElementById('slitSlider');
+        const slitValue = document.getElementById('slitValue');
+        const wavelengthSliderDiffraction = document.getElementById('wavelengthSliderDiffraction');
+        const wavelengthValueDiffraction = document.getElementById('wavelengthValueDiffraction');
+
+        function animateDiffraction(time) {
+            const w = diffractionCanvas.width;
+            const h = diffractionCanvas.height;
+            const slitWidth = parseInt(slitSlider.value);
+            const lambda = parseInt(wavelengthSliderDiffraction.value);
+            slitValue.textContent = slitWidth;
+            wavelengthValueDiffraction.textContent = lambda;
+            const barrierX = w / 3;
+            const waveSpeed = 40;
+
+            dCtx.clearRect(0, 0, w, h);
+            dCtx.fillStyle = '#3f3c3a';
+            dCtx.fillRect(barrierX, 0, 10, h/2 - slitWidth/2);
+            dCtx.fillRect(barrierX, h/2 + slitWidth/2, 10, h/2 - slitWidth/2);
+            
+            dCtx.strokeStyle = 'rgba(13, 148, 136, 0.7)';
+            dCtx.lineWidth = 1.5;
+
+            const offset = (time * waveSpeed) % lambda;
+
+            // Incident waves
+            for (let i = -2; i < barrierX / lambda; i++) {
+                const x = i * lambda + offset;
+                if (x < barrierX) {
+                    dCtx.beginPath();
+                    dCtx.moveTo(x, 0);
+                    dCtx.lineTo(x, h);
+                    dCtx.stroke();
+                }
+            }
+
+            // Diffracted waves
+            const spreadAngle = Math.min(Math.PI, Math.PI * (lambda / slitWidth));
+            for (let i = 0; i < w / lambda; i++) {
+                const radius = offset + i * lambda;
+                dCtx.beginPath();
+                dCtx.arc(barrierX + 5, h / 2, radius, -spreadAngle / 2, spreadAngle / 2);
+                dCtx.stroke();
+            }
+        }
+
+        // Interference
+        const interferenceCanvas = document.getElementById('interferenceCanvas');
+        const iCtx = interferenceCanvas.getContext('2d');
+        const interferenceStartBtn = document.getElementById('interferenceStartBtn');
+        const interferenceStopBtn = document.getElementById('interferenceStopBtn');
+        let interferenceAnimFrame;
+        let interferenceTime = 0;
+
+        function drawInterference() {
+            const w = interferenceCanvas.width;
+            const h = interferenceCanvas.height;
+            const source1 = { x: w / 2 - 40, y: h / 2 };
+            const source2 = { x: w / 2 + 40, y: h / 2 };
+            
+            iCtx.clearRect(0, 0, w, h);
+            
+            const imgData = iCtx.createImageData(w, h);
+            const data = imgData.data;
+            const wavelength = 30;
+
+            for (let x = 0; x < w; x++) {
+                for (let y = 0; y < h; y++) {
+                    const d1 = Math.sqrt(Math.pow(x - source1.x, 2) + Math.pow(y - source1.y, 2));
+                    const d2 = Math.sqrt(Math.pow(x - source2.x, 2) + Math.pow(y - source2.y, 2));
+                    const v1 = Math.sin(d1 / wavelength * 2 * Math.PI - interferenceTime);
+                    const v2 = Math.sin(d2 / wavelength * 2 * Math.PI - interferenceTime);
+                    const value = v1 + v2;
+                    
+                    const idx = (y * w + x) * 4;
+                    const intensity = Math.pow(Math.abs(value) / 2, 2) * 255;
+                    data[idx] = 13; 
+                    data[idx + 1] = 148;
+                    data[idx + 2] = 136;
+                    data[idx + 3] = intensity;
+                }
+            }
+            iCtx.putImageData(imgData, 0, 0);
+            
+            iCtx.fillStyle = 'red';
+            iCtx.beginPath();
+            iCtx.arc(source1.x, source1.y, 5, 0, 2 * Math.PI);
+            iCtx.fill();
+            iCtx.beginPath();
+            iCtx.arc(source2.x, source2.y, 5, 0, 2 * Math.PI);
+            iCtx.fill();
+
+            interferenceTime += 0.1;
+            interferenceAnimFrame = requestAnimationFrame(drawInterference);
+        }
+        
+        interferenceStartBtn.addEventListener('click', () => {
+            cancelAnimationFrame(interferenceAnimFrame);
+            interferenceTime = 0;
+            drawInterference();
+            interferenceStartBtn.classList.replace('bg-gray-400', 'bg-teal-500');
+            interferenceStopBtn.classList.replace('bg-teal-500', 'bg-gray-400');
+        });
+
+        interferenceStopBtn.addEventListener('click', () => {
+            cancelAnimationFrame(interferenceAnimFrame);
+            interferenceStopBtn.classList.replace('bg-gray-400', 'bg-teal-500');
+            interferenceStartBtn.classList.replace('bg-teal-500', 'bg-gray-400');
+        });
+
+        // Huygens' Principle
+        const huygensCanvas = document.getElementById('huygensCanvas');
+        const hCtx = huygensCanvas.getContext('2d');
+        const huygensPlaneSourcesSlider = document.getElementById('huygensPlaneSourcesSlider');
+        const huygensPlaneSourcesValue = document.getElementById('huygensPlaneSourcesValue');
+        const sphericalWaveCanvas = document.getElementById('sphericalWaveCanvas');
+        const spCtx = sphericalWaveCanvas.getContext('2d');
+        const huygensPlanePlayPauseBtn = document.getElementById('huygensPlanePlayPauseBtn');
+        const huygensPlaneResetBtn = document.getElementById('huygensPlaneResetBtn');
+        const huygensPlaneTimeSlider = document.getElementById('huygensPlaneTimeSlider');
+        let huygensPlaneAnimFrame;
+        let isHuygensPlanePlaying = false;
+        
+        const huygensSphericalPlayPauseBtn = document.getElementById('huygensSphericalPlayPauseBtn');
+        const huygensSphericalResetBtn = document.getElementById('huygensSphericalResetBtn');
+        const huygensSphericalTimeSlider = document.getElementById('huygensSphericalTimeSlider');
+        const huygensSphericalSourcesSlider = document.getElementById('huygensSphericalSourcesSlider');
+        const huygensSphericalSourcesValue = document.getElementById('huygensSphericalSourcesValue');
+        let huygensSphericalAnimFrame;
+        let isHuygensSphericalPlaying = false;
+
+
+        function drawHuygensPrinciple(time) {
+            const w = huygensCanvas.width;
+            const h = huygensCanvas.height;
+            const numSources = parseInt(huygensPlaneSourcesSlider.value);
+            huygensPlaneSourcesValue.textContent = numSources;
+
+            hCtx.clearRect(0, 0, w, h);
+
+            const wavelength = 80;
+            const wavefrontX = 50 + time;
+
+            hCtx.strokeStyle = 'black';
+            hCtx.lineWidth = 2;
+            hCtx.beginPath();
+            hCtx.moveTo(wavefrontX, 0);
+            hCtx.lineTo(wavefrontX, h);
+            hCtx.stroke();
+
+            const radius = time;
+
+            for (let i = 0; i < numSources; i++) {
+                const sourceY = (h / (numSources + 1)) * (i + 1);
+                
+                hCtx.fillStyle = 'red';
+                hCtx.beginPath();
+                hCtx.arc(wavefrontX, sourceY, 4, 0, 2 * Math.PI);
+                hCtx.fill();
+
+                hCtx.strokeStyle = 'rgba(255, 165, 0, 0.5)';
+                hCtx.lineWidth = 1;
+                hCtx.beginPath();
+                hCtx.arc(wavefrontX, sourceY, radius, -Math.PI / 2, Math.PI / 2);
+                hCtx.stroke();
+            }
+
+            const newWavefrontX = wavefrontX + radius;
+            if (newWavefrontX < w) {
+                hCtx.strokeStyle = '#0d9488'; // Teal color
+                hCtx.lineWidth = 2;
+                hCtx.setLineDash([5, 5]);
+                hCtx.beginPath();
+                hCtx.moveTo(newWavefrontX, 0);
+                hCtx.lineTo(newWavefrontX, h);
+                hCtx.stroke();
+                hCtx.setLineDash([]);
+            }
+        }
+        
+        function runHuygensPlaneAnimation() {
+            let currentTime = parseFloat(huygensPlaneTimeSlider.value);
+            if (currentTime >= 80) currentTime = 0;
+            currentTime++;
+            huygensPlaneTimeSlider.value = currentTime;
+            drawHuygensPrinciple(currentTime);
+            if(isHuygensPlanePlaying) huygensPlaneAnimFrame = requestAnimationFrame(runHuygensPlaneAnimation);
+        }
+        
+        huygensPlaneSourcesSlider.addEventListener('input', () => drawHuygensPrinciple(parseFloat(huygensPlaneTimeSlider.value)));
+        huygensPlanePlayPauseBtn.addEventListener('click', () => {
+            isHuygensPlanePlaying = !isHuygensPlanePlaying;
+            huygensPlanePlayPauseBtn.textContent = isHuygensPlanePlaying ? '一時停止' : '再生';
+            if (isHuygensPlanePlaying) runHuygensPlaneAnimation();
+            else cancelAnimationFrame(huygensPlaneAnimFrame);
+        });
+        huygensPlaneResetBtn.addEventListener('click', () => {
+            isHuygensPlanePlaying = false;
+            huygensPlanePlayPauseBtn.textContent = '再生';
+            cancelAnimationFrame(huygensPlaneAnimFrame);
+            huygensPlaneTimeSlider.value = 0;
+            drawHuygensPrinciple(0);
+        });
+        huygensPlaneTimeSlider.addEventListener('input', (e) => {
+             if (isHuygensPlanePlaying) {
+                isHuygensPlanePlaying = false;
+                huygensPlanePlayPauseBtn.textContent = '再生';
+                cancelAnimationFrame(huygensPlaneAnimFrame);
+            }
+            drawHuygensPrinciple(parseFloat(e.target.value))
+        });
+        drawHuygensPrinciple(0);
+
+        function drawSphericalWave(time) {
+            const w = sphericalWaveCanvas.width;
+            const h = sphericalWaveCanvas.height;
+            const numSources = parseInt(huygensSphericalSourcesSlider.value);
+            huygensSphericalSourcesValue.textContent = numSources;
+            spCtx.clearRect(0,0,w,h);
+            const centerX = w/2;
+            const centerY = h/2;
+            
+            const mainRadius = 50;
+            const waveletRadius = time;
+
+            spCtx.strokeStyle = 'black';
+            spCtx.lineWidth = 2;
+            spCtx.beginPath();
+            spCtx.arc(centerX, centerY, mainRadius, 0, 2 * Math.PI);
+            spCtx.stroke();
+
+            for(let i=0; i < numSources; i++) {
+                const angle = (2 * Math.PI / numSources) * i;
+                const sourceX = centerX + mainRadius * Math.cos(angle);
+                const sourceY = centerY + mainRadius * Math.sin(angle);
+
+                spCtx.fillStyle = 'red';
+                spCtx.beginPath();
+                spCtx.arc(sourceX, sourceY, 4, 0, 2 * Math.PI);
+                spCtx.fill();
+
+                spCtx.strokeStyle = 'rgba(255, 165, 0, 0.5)';
+                spCtx.lineWidth = 1;
+                spCtx.beginPath();
+                spCtx.arc(sourceX, sourceY, waveletRadius, 0, 2 * Math.PI);
+                spCtx.stroke();
+            }
+
+            const newRadius = mainRadius + waveletRadius;
+            if (newRadius < w/2) {
+                spCtx.strokeStyle = '#0d9488';
+                spCtx.lineWidth = 2;
+                spCtx.setLineDash([5, 5]);
+                spCtx.beginPath();
+                spCtx.arc(centerX, centerY, newRadius, 0, 2 * Math.PI);
+                spCtx.stroke();
+                spCtx.setLineDash([]);
+            }
+        }
+        
+        function runHuygensSphericalAnimation() {
+            let currentTime = parseFloat(huygensSphericalTimeSlider.value);
+            if (currentTime >= 80) currentTime = 0;
+            currentTime++;
+            huygensSphericalTimeSlider.value = currentTime;
+            drawSphericalWave(currentTime);
+            if(isHuygensSphericalPlaying) huygensSphericalAnimFrame = requestAnimationFrame(runHuygensSphericalAnimation);
+        }
+
+        huygensSphericalSourcesSlider.addEventListener('input', () => drawSphericalWave(parseFloat(huygensSphericalTimeSlider.value)));
+        huygensSphericalPlayPauseBtn.addEventListener('click', () => {
+            isHuygensSphericalPlaying = !isHuygensSphericalPlaying;
+            huygensSphericalPlayPauseBtn.textContent = isHuygensSphericalPlaying ? '一時停止' : '再生';
+            if (isHuygensSphericalPlaying) runHuygensSphericalAnimation();
+            else cancelAnimationFrame(huygensSphericalAnimFrame);
+        });
+        huygensSphericalResetBtn.addEventListener('click', () => {
+            isHuygensSphericalPlaying = false;
+            huygensSphericalPlayPauseBtn.textContent = '再生';
+            cancelAnimationFrame(huygensSphericalAnimFrame);
+            huygensSphericalTimeSlider.value = 0;
+            drawSphericalWave(0);
+        });
+        huygensSphericalTimeSlider.addEventListener('input', (e) => {
+             if (isHuygensSphericalPlaying) {
+                isHuygensPlanePlaying = false;
+                huygensSphericalPlayPauseBtn.textContent = '再生';
+                cancelAnimationFrame(huygensSphericalAnimFrame);
+            }
+            drawSphericalWave(parseFloat(e.target.value))
+        });
+        drawSphericalWave(0);
+
+        masterAnimate();
+    });
+    </script>
+</body>
+</html>
