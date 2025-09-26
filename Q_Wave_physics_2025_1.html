@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高校物理 波動 理解度チェック</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeXのCSSファイルを読み込む -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMVIhbGKLCePo231CVQSHcLesaPSAHUsqAPLC2HSSg52OzwlW" crossorigin="anonymous">
+
+    <style>
+        body { font-family: 'Helvetica Neue', 'Arial', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif; }
+        .katex { font-size: 1.1em; }
+        .option-btn { transition: all 0.2s ease-in-out; }
+        .option-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .option-btn.selected { border-color: #3b82f6; background-color: #dbeafe; }
+        .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; }
+        .option-btn.incorrect { background-color: #fee2e2; border-color: #ef4444; }
+        .toc-item.active { background-color: #e0f2fe; color: #0c4a6e; font-weight: bold; }
+        .toc-item.completed { background-color: #dcfce7; color: #166534; }
+        input[type="file"] { display: none; }
+        .toc-topic-group summary { font-weight: bold; cursor: pointer; padding: 0.5rem; border-radius: 0.375rem; }
+        .toc-topic-group summary:hover { background-color: #f3f4f6; }
+        .toc-question-btn { text-align: left; width: 100%; padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 0.375rem; }
+        .toc-question-btn:hover { background-color: #e0f2fe; }
+        .toc-question-btn.active { background-color: #bae6fd; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app" class="flex flex-col md:flex-row min-h-screen">
+        <aside id="sidebar" class="w-full md:w-72 bg-white border-r border-gray-200 p-4 md:p-6">
+            <h2 id="toc-title" class="text-xl font-bold mb-4 text-gray-700">目次</h2>
+            <div id="toc" class="space-y-1"></div>
+            <div id="sidebar-footer" class="mt-8">
+                <button id="end-quiz-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    終了しレポートを作成
+                </button>
+                 <button id="exit-teacher-mode-btn" class="hidden w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    先生モードを終了
+                </button>
+            </div>
+        </aside>
+        <main class="flex-1 p-4 md:p-8">
+            <div id="quiz-container" class="max-w-4xl mx-auto">
+                <div class="mb-6 p-4 bg-white rounded-xl shadow">
+                    <p id="mode-indicator" class="text-sm font-bold text-purple-600"></p>
+                    <p class="text-sm text-gray-500">現在の単元</p>
+                    <h1 id="current-topic-title" class="text-2xl font-bold text-sky-800"></h1>
+                </div>
+                <div id="question-area" class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                    <div id="question-text" class="text-lg leading-relaxed mb-6"></div>
+                    <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    <div class="mt-8 text-center">
+                        <button id="check-answer-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-10 rounded-lg shadow-lg transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none" disabled>
+                            答え合わせ
+                        </button>
+                    </div>
+                </div>
+                <div id="explanation-area" class="hidden mt-6 bg-white p-6 md:p-8 rounded-xl shadow-lg border-t-8">
+                    <h2 id="result-title" class="text-3xl font-bold mb-4"></h2>
+                    <p class="font-bold mb-2 text-gray-700">正解：</p>
+                    <div id="correct-answer-text" class="mb-4 p-3 bg-gray-100 rounded-md"></div>
+                    <p class="font-bold mb-2 text-gray-700">解説：</p>
+                    <div id="explanation-text" class="leading-relaxed space-y-3"></div>
+                    <hr class="my-6">
+                    <div id="understanding-buttons" class="text-center">
+                        <p class="mb-4 font-semibold text-lg">この解説で理解できましたか？</p>
+                        <button onclick="app.handleUnderstanding(true)" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg mr-4 shadow-lg transition-transform transform hover:scale-105">理解できた</button>
+                        <button onclick="app.handleUnderstanding(false)" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">理解できなかった</button>
+                    </div>
+                     <div id="teacher-next-buttons" class="hidden text-center">
+                        <button onclick="app.jumpToNextQuestion()" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">次の問題へ</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div id="start-modal" class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center transform transition-all scale-100">
+            <h1 class="text-3xl font-bold text-sky-800 mb-4">波動 理解度チェック</h1>
+            <p class="text-gray-600 mb-6">はじめに、モードを選択するか、出席番号と名前を入力してください。毎週月曜日に随時提出。最終提出日は9/30。Google Classroomの課題にJSONファイルを添付して提出してください。</p>
+            <div class="space-y-4 mb-6">
+                <input type="text" id="student-id-input" placeholder="出席番号" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="student-name-input" placeholder="名前" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button id="start-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105 mb-3">
+                学習を開始する
+            </button>
+            <button id="teacher-mode-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105 mb-3">
+                先生モードで開始
+            </button>
+            <div class="grid grid-cols-2 gap-3">
+                <label for="load-progress-input" class="w-full cursor-pointer inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105">
+                    続きから再開
+                </label>
+                <input type="file" id="load-progress-input" accept=".json">
+                <label for="load-report-input" class="w-full cursor-pointer inline-block bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105">
+                    レポート読込
+                </label>
+                <input type="file" id="load-report-input" accept=".json">
+            </div>
+        </div>
+        <div id="report-modal" class="hidden bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full transform transition-all scale-95 opacity-0 overflow-y-auto max-h-screen">
+            <h1 class="text-3xl font-bold text-sky-800 mb-2 text-center">学習レポート</h1>
+            <div id="report-student-info" class="text-center text-gray-600 mb-6"></div>
+            <div id="report-content" class="mb-6"></div>
+             <div id="report-review-content" class="mb-6"></div>
+            <div id="report-teacher-mode-info" class="mb-6"></div>
+            <div id="report-history-section" class="mb-6"></div>
+            <div class="text-center space-x-4">
+                 <button id="review-btn" class="hidden bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    復習を開始する
+                </button>
+                 <button id="save-progress-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    進捗を保存して最初の画面に戻る
+                </button>
+                 <button id="restart-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    問題に戻る
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KaTeXのJavaScriptライブラリを読み込む -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <!-- auto-render拡張機能を読み込む -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    
+    <script>
+    const app = {
+        state: {
+            studentId: '', studentName: '', startedAt: null, resumedHistory: [],
+            currentTopicIndex: 0, currentGroupIndex: 0, topicGroups: [],
+            currentQuestion: null, selectedAnswerIndex: null, answeredCorrectly: false,
+            usedQuestionIds: new Set(), reportData: {}, isReviewMode: false,
+            reviewQueue: [], isTeacherMode: false, teacherModeHistory: [], saveHistory: [], 
+        },
+        elements: {},
+        data: {
+            topics: [ "波の基本概念と伝播", "波の現象", "音波", "光波" ],
+            questions: [
+                { id: 1, topicIndex: 0, group: 'wave-type', question: "媒質の振動方向が波の進行方向と垂直である波を何というか。", options: ["縦波", "横波", "疎密波", "定在波", "衝撃波", "表面波"], answer: 1, explanation: "媒質の振動方向が波の進行方向に対して垂直な波を「横波」といいます。電磁波（光）や弦を伝わる波がその例です。一方、振動方向が進行方向と同じ波は「縦波（疎密波）」です。" },
+                { id: 2, topicIndex: 0, group: 'wave-type', question: "空気中を伝わる音波のように、媒質の振動方向が波の進行方向と同じである波を特に何というか。", options: ["横波", "電磁波", "偏光", "疎密波", "せん断波", "ねじれ波"], answer: 3, explanation: "媒質の振動方向が波の進行方向と同じ波を「縦波」といいます。縦波は媒質の密度が周期的に変化するため、「疎密波」とも呼ばれます。音波が代表的な例です。" },
+                { id: 3, topicIndex: 0, group: 'wave-speed', question: "波長が 2.0 m、振動数が 5.0 Hz の波の速さは何 m/s か。", options: ["0.40 m/s", "2.5 m/s", "5.0 m/s", "7.0 m/s", "10 m/s", "20 m/s"], answer: 4, explanation: "波の基本式 $v = f\\lambda$ を用います。速さ $v$ は振動数 $f$ と波長 $\\lambda$ の積です。したがって、$v = 5.0 \\, \\text{Hz} \\times 2.0 \\, \\text{m} = 10$ m/s となります。" },
+                { id: 4, topicIndex: 0, group: 'wave-speed', question: "速さ 340 m/s で伝わる音波の周期が 0.020 s であった。この音波の波長は何 m か。", options: ["6.8 m", "17 m", "34 m", "68 m", "17000 m", "計算できない"], answer: 0, explanation: "周期 $T$ と振動数 $f$ の関係は $f = 1/T$ です。まず振動数を求めると $f = 1 / 0.020 = 50$ Hz。次に波の基本式 $v = f\\lambda$ を変形して $\\lambda = v/f$ とします。値を代入すると $\\lambda = 340 / 50 = 6.8$ m となります。" },
+                { id: 5, topicIndex: 0, group: 'phase', question: "ある波の山と、そこから最も近い谷との間の位相差はいくらか。", options: ["0", "$\\pi/2$", "$\\pi$", "$3\\pi/2$", "$2\\pi$", "波による"], answer: 2, explanation: "位相は波の振動状態を表す量です。波の山は変位が最大の点、谷は変位が最小（負で最大）の点です。山と谷はちょうど半波長ずれており、振動の状態としては真逆（逆位相）です。これを位相差で表すと $\\pi$ (180°) となります。" },
+                { id: 6, topicIndex: 0, group: 'wave-equation', question: "$x$軸の正の向きに速さ$v$で進む正弦波がある。原点($x=0$)の媒質の変位が $y = A \\sin(\\omega t)$ で表されるとき、位置$x$における時刻$t$の変位を表す式として正しいものはどれか。", options: ["$y = A \\sin(\\omega (t+x/v))$", "$y = A \\sin(\\omega (t-x/v))$", "$y = A \\sin(\\omega t - x/v)$", "$y = A \\sin(\\omega t) - x/v$", "$y = A \\cos(\\omega (t-x/v))$", "$y = A \\sin(kx - \\omega t)$"], answer: 1, explanation: "位置$x$の媒質の振動は、原点の振動よりも時間$x/v$だけ遅れて伝わります。したがって、原点の時刻 $t' = t - x/v$ のときの振動が、時刻$t$に位置$x$に現れます。よって、原点の式の$t$を$t-x/v$で置き換えた $y = A \\sin(\\omega (t-x/v))$ が正解となります。" },
+                { id: 7, topicIndex: 1, group: 'superposition', question: "複数の波が同じ場所で出会ったとき、その点の変位が各々の波の変位の和になるという原理を何というか。", options: ["ホイヘンスの原理", "重ねあわせの原理", "フェルマーの原理", "運動量保存則", "エネルギー保存則", "作用・反作用の法則"], answer: 1, explanation: "「重ねあわせの原理」は、複数の波が媒質中で重なるとき、合成波の変位が個々の波の変位のベクトル和で与えられるというものです。これにより干渉や定在波などの現象が説明されます。" },
+                { id: 8, topicIndex: 1, group: 'interference', question: "同位相で振動する2つの波源$S_1, S_2$がある。ある点$P$が$S_1$から$5\\lambda$、$S_2$から$3\\lambda$の距離にあるとき、点$P$での波の干渉はどうなるか。（$\\lambda$は波長）", options: ["強めあう", "弱めあう", "振動しない", "どちらとも言えない", "減衰する", "定在波ができる"], answer: 0, explanation: "2つの波源からの経路差は$5\\lambda - 3\\lambda = 2\\lambda$です。経路差が波長の整数倍 ($m\\lambda$, $m=0, 1, 2, ...$) のとき、波は同位相で重なり強めあいます。この場合は$m=2$に相当するため、強めあいます。" },
+                { id: 9, topicIndex: 1, group: 'interference', question: "逆位相で振動する2つの波源$S_1, S_2$がある。波源からの経路差が$2.5\\lambda$である点では、波は強めあうか、弱めあうか。", options: ["強めあう", "弱めあう", "どちらでもない", "強めあいも弱めあいも周期的に繰り返す", "波が届かない", "波源の振幅による"], answer: 0, explanation: "波源が逆位相なので、強めあう条件と弱めあう条件が同位相の場合と逆になります。逆位相の場合、経路差が半波長の奇数倍 ($(m+1/2)\\lambda$) のときに強めあいます。$2.5\\lambda = (2+1/2)\\lambda$なので、この点は強めあいます。" },
+                { id: 10, topicIndex: 1, group: 'standing-wave', question: "定在波（定常波）において、媒質の振動が最も大きくなる部分を何と呼ぶか。", options: ["節", "腹", "山", "谷", "波源", "開口端"], answer: 1, explanation: "定在波は、逆向きに進む同じ波が重なってできる、波形が進行しない波です。媒質が全く振動しない点を「節」、振幅が最大になる点を「腹」と呼びます。" },
+                { id: 11, topicIndex: 1, group: 'reflection', question: "ロープの端を壁に固定し、波を送ったときの反射に関する記述として正しいものはどれか。", options: ["山で入射した波は、山のまま反射する（自由端反射）", "山で入射した波は、谷になって反射する（固定端反射）", "反射波の波長は入射波より短くなる", "反射波の速さは入射波より速くなる", "反射は起こらない", "位相は変化しない"], answer: 1, explanation: "端が固定されている場合（固定端）、反射の際に波の変位の向きが反転します。つまり、山で入射した波は谷として、谷で入射した波は山として反射します。これは位相が$\\pi$ずれることを意味します。これを「固定端反射」といいます。" },
+                { id: 12, topicIndex: 1, group: 'refraction', question: "波が、速さの異なる媒質へ斜めに入射するときに進行方向を変える現象を何というか。", options: ["干渉", "回折", "反射", "分散", "屈折", "偏光"], answer: 4, explanation: "波が媒質の境界を通過するとき、その速さが変わることで進行方向が曲がる現象を「屈折」といいます。プールの中の物が浅く見えたり、光がプリズムで曲がったりするのはこの現象によるものです。" },
+                { id: 13, topicIndex: 1, group: 'diffraction', question: "波が障害物の後ろに回り込んで伝わる現象を何というか。", options: ["干渉", "屈折", "反射", "回折", "分散", "共鳴"], answer: 3, explanation: "「回折」は、波が障害物の背後に回り込んだり、隙間を通過した後に広がったりする現象です。この現象は、波の波長が障害物や隙間の大きさに近いほど顕著に現れます。物陰から音が聞こえるのは音波の回折によるものです。" },
+                { id: 14, topicIndex: 2, group: 'sound-speed', question: "音の速さに関する記述として、最も適切なものはどれか。", options: ["真空中が最も速く伝わる", "温度が高いほど遅くなる", "気体中より固体中の方が一般に速い", "音の高さ（振動数）が高いほど速い", "音の大きさ（振幅）が大きいほど速い", "媒質の種類によらない"], answer: 2, explanation: "音は媒質の振動が伝わる現象なので、媒質がない真空中は伝わりません。また、音の速さは媒質の密度や弾性率に依存し、一般に気体＜液体＜固体の順に速くなります。空気中では温度が高いほど速くなります。" },
+                { id: 15, topicIndex: 2, group: 'beats', question: "440 Hz のおんさと、442 Hz のおんさを同時にならした。1秒間に聞こえるうなりの回数は何回か。", options: ["0回", "1回", "2回", "441回", "882回", "計算できない"], answer: 2, explanation: "うなりの回数（うなり振動数）$f_b$は、2つの音の振動数$f_1, f_2$の差の絶対値で与えられます。$f_b = |f_1 - f_2| = 2$ 回/秒となります。" },
+                { id: 16, topicIndex: 2, group: 'beats', question: "振動数$f_0$のおんさと、未知の振動数$f_x$のおんさを鳴らしたところ、毎秒3回のうなりが聞こえた。おんさ$f_x$に粘土を少量つけて質量を増やすと、うなりの回数が毎秒1回に減少した。おんさ$f_x$の元の振動数はいくらか。", options: ["$f_0 - 3$", "$f_0 + 3$", "$f_0 - 1$", "$f_0 + 1$", "$3f_0$", "特定できない"], answer: 1, explanation: "うなりが毎秒3回なので、$f_x$は$f_0+3$または$f_0-3$です。おんさに粘土をつけると質量が増え、振動数は小さくなります。もし$f_x = f_0-3$なら、振動数はさらに小さくなり、うなりは3回より増えるはずです。うなりが1回に減ったということは、$f_x$が$f_0$に近づいたことを意味します。したがって、元の振動数は$f_0$より高かった$f_x = f_0+3$と判断できます。" },
+                { id: 17, topicIndex: 2, group: 'doppler-effect', question: "救急車が自分に向かってくるとき、サイレンの音は通常よりどう聞こえるか。この現象を何というか。", options: ["高く聞こえる（ドップラー効果）", "低く聞こえる（ドップラー効果）", "大きく聞こえる（干渉）", "小さく聞こえる（減衰）", "音が割れて聞こえる（共鳴）", "変わらない"], answer: 0, explanation: "音源や観測者が移動することによって、観測される音の振動数$f$が変化する現象を「ドップラー効果」といいます。音源が観測者に近づく場合、波の間隔が詰められて観測される振動数が高くなるため、音は高く聞こえます。遠ざかる場合は逆に低く聞こえます。" },
+                { id: 18, topicIndex: 2, group: 'doppler-effect', question: "静止している音源が振動数$f_0$の音を出している。観測者が速さ$u$で音源から遠ざかる場合、観測する音の振動数$f$はどうなるか。音速を$V$とする。", options: ["$f = \\frac{V}{V-u}f_0$", "$f = \\frac{V-u}{V}f_0$", "$f = \\frac{V}{V+u}f_0$", "$f = \\frac{V+u}{V}f_0$", "$f = f_0$", "$f = \\frac{u}{V}f_0$"], answer: 1, explanation: "観測者が音源から遠ざかると、単位時間あたりに受け取る波の数が減ります。音の相対速度は$V-u$となるため、観測される振動数$f$は$f = \\frac{V-u}{V}f_0$となります。分子が小さくなるので、元の振動数$f_0$より低い音として観測されます。" },
+                { id: 19, topicIndex: 2, group: 'resonance', question: "長さ$L$の閉管（一端が閉じ、他端が開いている管）で気柱が共鳴している。最も波長が長い基本振動の波長$\\lambda$はいくらか。", options: ["$L/2$", "$L$", "$2L$", "$4L$", "$L/4$", "$L$に依存しない"], answer: 3, explanation: "閉管の気柱の共鳴では、閉口端が定在波の節、開口端が腹となります。最も波長の長い基本振動では、管の長さ$L$がちょうど波長の1/4に相当します。つまり$L = \\lambda/4$となるので、波長は$\\lambda = 4L$となります。" },
+                { id: 20, topicIndex: 2, group: 'resonance', question: "ギターの弦の長さを半分にすると、基本振動の振動数は元の何倍になるか。ただし、弦の張力と線密度は一定とする。", options: ["1/4倍", "1/2倍", "$1/\\sqrt{2}$倍", "$\\sqrt{2}$倍", "2倍", "4倍"], answer: 4, explanation: "弦を伝わる波の速さ$v$が一定のとき、基本振動の波長$\\lambda$は弦の長さ$L$の2倍($\\lambda = 2L$)です。振動数$f$は$f = v/\\lambda = v/(2L)$となり、弦の長さに反比例します。したがって、弦の長さが半分になると、振動数は2倍になります。" },
+                { id: 21, topicIndex: 3, group: 'em-wave', question: "光の性質に関する記述として、誤っているものはどれか。", options: ["真空中の速さは約$3.0 \\times 10^8$m/s である", "電場と磁場が振動しながら伝わる電磁波の一種である", "媒質の振動方向と進行方向が垂直な横波である", "水中などの媒質中では真空中の速さより遅くなる", "波長によって屈折率が異なる現象を分散という", "音波と同様に、伝わるためには媒質が必要である"], answer: 5, explanation: "光は電磁波の一種であり、電場と磁場の振動が互いを誘発しながら空間を伝わっていくため、音波とは異なり媒質がなくても真空中を伝わることができます。他の選択肢はすべて正しい記述です。" },
+                { id: 22, topicIndex: 3, group: 'refractive-index', question: "真空に対する水の屈折率が 4/3 のとき、水中での光の速さは真空中の何倍か。", options: ["4/3倍", "3/4倍", "16/9倍", "9/16倍", "1倍", "屈折率からはわからない"], answer: 1, explanation: "媒質の屈折率$n$は、真空中の光速$c$と媒質中の光速$v$を用いて$n = c/v$と定義されます。したがって、媒質中の光速は$v = c/n$となります。水の屈折率が 4/3 なので、水中の光速は真空中の$1/(4/3) = 3/4$倍になります。" },
+                { id: 23, topicIndex: 3, group: 'total-reflection', question: "光が屈折率の大きい媒質から小さい媒質へ入射するとき、入射角がある角度（臨界角）を超えると、光がすべて反射される現象を何というか。", options: ["分散", "回折", "干渉", "全反射", "偏光", "光電効果"], answer: 3, explanation: "この現象は「全反射」と呼ばれます。光ファイバーは、この全反射の原理を利用して光信号を伝送しています。屈折の法則$n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2$で、$n_1 > n_2$のときに起こり得ます。" },
+                { id: 24, topicIndex: 3, group: 'lens', question: "焦点距離$f$の凸レンズの前方$2f$の位置に物体を置いたとき、できる実像の位置と大きさはどうなるか。", options: ["後方$f$の位置に、大きさは半分になる", "後方$2f$の位置に、大きさは等倍になる", "後方$2f$の位置に、大きさは2倍になる", "後方$f/2$の位置に、大きさは半分になる", "像はできない", "虚像ができる"], answer: 1, explanation: "レンズの写像公式$1/a + 1/b = 1/f$を用います。物体距離$a = 2f$を代入すると、$1/(2f) + 1/b = 1/f$となります。これを解くと$1/b = 1/f - 1/(2f) = 1/(2f)$となり、像距離$b = 2f$が得られます。倍率は$m = |b/a| = |2f/2f| = 1$なので、等倍です。よって、後方$2f$の位置に等倍の実像ができます。" },
+                { id: 25, topicIndex: 3, group: 'young-experiment', question: "ヤングの干渉実験で、複スリットからスクリーンまでの距離を2倍にし、スリット間隔を半分にすると、明線間隔はどうなるか。", options: ["1/4倍になる", "1/2倍になる", "変わらない", "2倍になる", "4倍になる", "8倍になる"], answer: 4, explanation: "ヤングの実験における明線間隔$\\Delta x$は、波長を$\\lambda$、複スリットからスクリーンまでの距離を$L$、スリット間隔を$d$として$\\Delta x = L\\lambda/d$と表されます。$L$を2倍($L \\to 2L$)、$d$を半分($d \\to d/2$)にすると、新しい明線間隔$\\Delta x'$は$\\Delta x' = (2L)\\lambda/(d/2) = 4(L\\lambda/d) = 4\\Delta x$となり、元の4倍になります。" },
+                { id: 26, topicIndex: 3, group: 'thin-film', question: "シャボン玉が色づいて見えるのは、どの現象が主な原因か。", options: ["光の分散", "光の回折", "光の偏光", "光の干渉", "光の直進", "光の吸収"], answer: 3, explanation: "シャボン玉の薄い膜の表面で反射する光と、裏面で反射する光が干渉しあうことで、特定の波長の光が強められたり弱められたりします。これにより、見る角度や膜の厚さに応じて様々な色が見えます。これは薄膜による光の干渉の典型例です。" },
+                { id: 27, topicIndex: 3, group: 'diffraction-grating', question: "回折格子に波長$\\lambda$の単色光を垂直に入射させたとき、明線ができる条件式として正しいものはどれか。格子の間隔を$d$、回折角を$\\theta$、整数を$m$とする。", options: ["$d\\sin\\theta = (m+1/2)\\lambda$", "$d\\cos\\theta = m\\lambda$", "$d\\sin\\theta = m\\lambda$", "$d\\tan\\theta = m\\lambda$", "$m\\sin\\theta = d\\lambda$", "$\\sin\\theta/d = m\\lambda$"], answer: 2, explanation: "回折格子によって回折した光が、隣り合うスリットからの光と強めあう条件は、経路差が波長の整数倍になることです。この経路差は$d\\sin\\theta$と表されるため、明線の条件式は$d\\sin\\theta = m\\lambda$となります。" },
+            ]
+        },
+        // --- ALL APP LOGIC IS CONTAINED BELOW ---
+        init() {
+            this.elements = {
+                sidebar: document.getElementById('sidebar'), toc: document.getElementById('toc'),
+                tocTitle: document.getElementById('toc-title'), endQuizBtn: document.getElementById('end-quiz-btn'),
+                exitTeacherModeBtn: document.getElementById('exit-teacher-mode-btn'), modeIndicator: document.getElementById('mode-indicator'),
+                currentTopicTitle: document.getElementById('current-topic-title'), questionArea: document.getElementById('question-area'),
+                questionText: document.getElementById('question-text'), optionsGrid: document.getElementById('options-grid'),
+                checkAnswerBtn: document.getElementById('check-answer-btn'), explanationArea: document.getElementById('explanation-area'),
+                resultTitle: document.getElementById('result-title'), correctAnswerText: document.getElementById('correct-answer-text'),
+                explanationText: document.getElementById('explanation-text'), understandingButtons: document.getElementById('understanding-buttons'),
+                teacherNextButtons: document.getElementById('teacher-next-buttons'), modalOverlay: document.getElementById('modal-overlay'),
+                startModal: document.getElementById('start-modal'), reportModal: document.getElementById('report-modal'),
+                startBtn: document.getElementById('start-btn'), teacherModeBtn: document.getElementById('teacher-mode-btn'), 
+                loadProgressInput: document.getElementById('load-progress-input'), loadReportInput: document.getElementById('load-report-input'),
+                saveProgressBtn: document.getElementById('save-progress-btn'), reviewBtn: document.getElementById('review-btn'),
+                restartBtn: document.getElementById('restart-btn'), studentIdInput: document.getElementById('student-id-input'),
+                studentNameInput: document.getElementById('student-name-input'), reportStudentInfo: document.getElementById('report-student-info'),
+                reportContent: document.getElementById('report-content'), reportReviewContent: document.getElementById('report-review-content'),
+                reportTeacherModeInfo: document.getElementById('report-teacher-mode-info'), reportHistorySection: document.getElementById('report-history-section'), 
+            };
+            this.elements.startBtn.addEventListener('click', () => this.startQuiz());
+            this.elements.teacherModeBtn.addEventListener('click', () => this.startTeacherMode());
+            this.elements.checkAnswerBtn.addEventListener('click', () => this.checkAnswer());
+            this.elements.endQuizBtn.addEventListener('click', () => this.generateReport());
+            this.elements.exitTeacherModeBtn.addEventListener('click', () => this.returnToStart());
+            this.elements.loadProgressInput.addEventListener('change', (e) => this.loadProgress(e));
+            this.elements.loadReportInput.addEventListener('change', (e) => this.loadReport(e));
+            this.elements.saveProgressBtn.addEventListener('click', () => { this.saveProgress(); this.returnToStart(); });
+            this.elements.reviewBtn.addEventListener('click', () => this.startReview());
+            this.elements.restartBtn.addEventListener('click', () => { this.elements.modalOverlay.style.display = 'none'; });
+            this.renderTOC();
+        },
+        // 数式のレンダリング関数を修正
+        renderKaTeX(element) {
+            // 既にレンダリングされたかどうかのフラグをチェック
+            if (element.dataset.katexRendered === 'true') {
+                return;
+            }
+            if (window.renderMathInElement) {
+                renderMathInElement(element, {
+                    delimiters: [ {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false} ],
+                    throwOnError: false
+                });
+                // レンダリング後にフラグをセット
+                element.dataset.katexRendered = 'true';
+            }
+        },
+        displayQuestion() {
+            const q = this.state.currentQuestion;
+            this.elements.currentTopicTitle.textContent = this.data.topics[q.topicIndex];
+            
+            // 質問テキストを一度クリア
+            this.elements.questionText.innerHTML = '';
+            // HTMLを挿入し、その後でKaTeXをレンダリング
+            this.elements.questionText.innerHTML = q.question;
+            this.renderKaTeX(this.elements.questionText);
+
+            this.elements.optionsGrid.innerHTML = '';
+            q.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn w-full text-left p-3 border-2 border-gray-300 rounded-lg hover:bg-blue-50';
+                
+                // オプションテキストに数式が含まれている可能性があるため、レンダリング用のspanを作成
+                const optionSpan = document.createElement('span');
+                optionSpan.textContent = option;
+                button.appendChild(optionSpan);
+
+                button.onclick = () => this.selectAnswer(index);
+                this.elements.optionsGrid.appendChild(button);
+
+                // 各オプションボタンのテキストもレンダリング
+                this.renderKaTeX(optionSpan);
+            });
+            this.elements.checkAnswerBtn.disabled = true;
+            this.elements.questionArea.style.display = 'block';
+            this.elements.explanationArea.style.display = 'none';
+            this.renderTOC();
+        },
+        showExplanation() {
+            const q = this.state.currentQuestion;
+            this.elements.questionArea.style.display = 'none';
+            this.elements.explanationArea.style.display = 'block';
+            this.elements.resultTitle.textContent = this.state.answeredCorrectly ? '正解！' : '不正解';
+            this.elements.explanationArea.className = this.state.answeredCorrectly 
+                ? 'mt-6 bg-white p-6 md:p-8 rounded-xl shadow-lg border-t-8 border-green-500'
+                : 'mt-6 bg-white p-6 md:p-8 rounded-xl shadow-lg border-t-8 border-red-500';
+            this.elements.correctAnswerText.innerHTML = `<span>${q.options[q.answer]}</span>`;
+            this.elements.explanationText.innerHTML = q.explanation;
+            // 解説表示時にもう一度レンダリングを行う
+            this.renderKaTeX(this.elements.explanationArea);
+            this.renderKaTeX(this.elements.correctAnswerText);
+        },
+        startQuiz(isLoaded = false) {
+            this.state.isTeacherMode = false;
+            if (!isLoaded) {
+                this.state.studentId = this.elements.studentIdInput.value; this.state.studentName = this.elements.studentNameInput.value;
+                if (!this.state.studentId || !this.state.studentName) { alert('出席番号と名前を入力してください。'); return; }
+                this.state.startedAt = new Date().toISOString(); this.state.resumedHistory = [];
+                this.state.currentTopicIndex = 0; this.state.usedQuestionIds.clear(); this.initializeReportData();
+            }
+            this.elements.modalOverlay.style.display = 'none'; this.updateUIVisibility(); this.loadTopic(this.state.currentTopicIndex);
+        },
+        startTeacherMode() {
+            this.state.isTeacherMode = true; this.state.teacherModeHistory.push(new Date().toISOString());
+            this.elements.modalOverlay.style.display = 'none'; this.updateUIVisibility(); this.renderTOC(); this.jumpToQuestion(1);
+        },
+        jumpToQuestion(questionId) {
+            const q = this.data.questions.find(q => q.id === questionId);
+            if (q) {
+                this.state.currentQuestion = q; this.state.currentTopicIndex = q.topicIndex;
+                this.elements.modalOverlay.style.display = 'none'; this.state.selectedAnswerIndex = null;
+                // 質問エリアと解説エリアのレンダリングフラグをリセット
+                this.elements.questionText.dataset.katexRendered = 'false';
+                this.elements.explanationArea.dataset.katexRendered = 'false';
+                this.elements.correctAnswerText.dataset.katexRendered = 'false';
+                this.displayQuestion();
+            }
+        },
+        jumpToNextQuestion() {
+            const currentIndex = this.data.questions.findIndex(q => q.id === this.state.currentQuestion.id);
+            const nextIndex = (currentIndex + 1) % this.data.questions.length;
+            this.jumpToQuestion(this.data.questions[nextIndex].id);
+        },
+        updateUIVisibility() {
+            const isTeacher = this.state.isTeacherMode;
+            this.elements.modeIndicator.textContent = isTeacher ? '先生モード' : '';
+            this.elements.endQuizBtn.style.display = isTeacher ? 'none' : 'block';
+            this.elements.exitTeacherModeBtn.style.display = isTeacher ? 'block' : 'none';
+            this.elements.understandingButtons.style.display = isTeacher ? 'none' : 'block';
+            this.elements.teacherNextButtons.style.display = isTeacher ? 'block' : 'none';
+            this.elements.tocTitle.textContent = isTeacher ? '問題一覧' : '目次';
+        },
+        saveProgress() {
+            this.state.saveHistory.push(new Date().toISOString());
+            const saveData = {
+                studentId: this.state.studentId, studentName: this.state.studentName, startedAt: this.state.startedAt,
+                resumedHistory: this.state.resumedHistory, savedAt: new Date().toISOString(),
+                currentTopicIndex: this.state.currentTopicIndex, currentGroupIndex: this.state.currentGroupIndex,
+                topicGroups: this.state.topicGroups, usedQuestionIds: Array.from(this.state.usedQuestionIds),
+                reportData: this.state.reportData, teacherModeHistory: this.state.teacherModeHistory, saveHistory: this.state.saveHistory,
+            };
+            const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const studentId = this.state.studentId || 'id'; const studentName = this.state.studentName || 'name';
+            const date = new Date().toISOString().slice(0, 10);
+            a.href = url; a.download = `${studentId}_${studentName}_physics-progress_${date}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        },
+        loadProgress(event) { this.loadAndProcessFile(event, true); },
+        loadReport(event) { this.loadAndProcessFile(event, false); },
+        loadAndProcessFile(event, startQuizAfterLoad) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const d = JSON.parse(e.target.result);
+                    if (d.reportData && d.usedQuestionIds && d.studentId) {
+                        this.state.studentId = d.studentId; this.state.studentName = d.studentName; this.state.startedAt = d.startedAt || new Date().toISOString();
+                        this.state.resumedHistory = d.resumedHistory || []; this.state.currentTopicIndex = d.currentTopicIndex; this.state.currentGroupIndex = d.currentGroupIndex;
+                        this.state.topicGroups = d.topicGroups; this.state.usedQuestionIds = new Set(d.usedQuestionIds); this.state.reportData = d.reportData;
+                        this.state.teacherModeHistory = d.teacherModeHistory || []; this.state.saveHistory = d.saveHistory || [];
+                        this.elements.studentIdInput.value = this.state.studentId; this.elements.studentNameInput.value = this.state.studentName;
+                        if (startQuizAfterLoad) { this.state.resumedHistory.push(new Date().toISOString()); this.startQuiz(true); } else { this.generateReport(); }
+                    } else { alert('無効なファイル形式です。'); }
+                } catch (error) { alert('ファイルの読み込みに失敗しました。'); console.error(error); }
+            };
+            reader.readAsText(file); event.target.value = '';
+        },
+        initializeReportData() {
+            this.data.topics.forEach(topic => {
+                const topicQuestions = this.data.questions.filter(q => q.topicIndex === this.data.topics.indexOf(topic));
+                const uniqueGroups = [...new Set(topicQuestions.map(q => q.group))];
+                this.state.reportData[topic] = {
+                    mistakes: 0, attempts: 0, completedGroups: 0, totalGroups: uniqueGroups.length, understoodCount: 0, notUnderstoodCount: 0,
+                    notUnderstoodQuestions: [], reviewAttempts: 0, reviewMistakes: 0, reviewUnderstoodCount: 0, reviewNotUnderstoodCount: 0,
+                };
+            });
+            this.state.saveHistory = []; this.state.teacherModeHistory = [];
+        },
+        loadTopic(topicIndex) {
+            this.state.currentTopicIndex = topicIndex;
+            if (!this.state.topicGroups || this.state.topicGroups.length === 0) {
+                const topicQuestions = this.data.questions.filter(q => q.topicIndex === topicIndex);
+                this.state.topicGroups = this.shuffleArray([...new Set(topicQuestions.map(q => q.group))]);
+                this.state.currentGroupIndex = 0;
+            }
+            this.loadQuestion();
+        },
+        loadQuestion() {
+            if (this.state.currentGroupIndex >= this.state.topicGroups.length) {
+                this.state.currentTopicIndex++; this.state.topicGroups = [];
+                if (this.state.currentTopicIndex >= this.data.topics.length) { this.generateReport(); return; } 
+                else { this.loadTopic(this.state.currentTopicIndex); return; }
+            }
+            const groupName = this.state.topicGroups[this.state.currentGroupIndex];
+            const availableQuestions = this.data.questions.filter(q => q.topicIndex === this.state.currentTopicIndex && q.group === groupName && !this.state.usedQuestionIds.has(q.id));
+            if (availableQuestions.length > 0) {
+                this.state.currentQuestion = availableQuestions[0]; this.state.usedQuestionIds.add(this.state.currentQuestion.id);
+                // 質問エリアのKaTeXレンダリングを一度クリア
+                this.elements.questionText.dataset.katexRendered = 'false';
+                this.displayQuestion();
+            } else { this.advance(true); }
+        },
+        selectAnswer(index) {
+            this.state.selectedAnswerIndex = index;
+            this.elements.optionsGrid.querySelectorAll('button').forEach((btn, i) => { btn.classList.toggle('selected', i === index); });
+            this.elements.checkAnswerBtn.disabled = false;
+        },
+        checkAnswer() {
+            if (this.state.selectedAnswerIndex === null) return;
+            const q = this.state.currentQuestion;
+            this.state.answeredCorrectly = this.state.selectedAnswerIndex === q.answer;
+            if (!this.state.isTeacherMode) {
+                const topicName = this.data.topics[q.topicIndex];
+                const stats = this.state.reportData[topicName];
+                const prefix = this.state.isReviewMode ? 'review' : '';
+                stats[prefix + 'Attempts'] = (stats[prefix + 'Attempts'] || 0) + 1;
+                if (!this.state.answeredCorrectly) stats[prefix + 'Mistakes'] = (stats[prefix + 'Mistakes'] || 0) + 1;
+            }
+            this.showExplanation();
+        },
+        handleUnderstanding(understood) {
+            const topicName = this.data.topics[this.state.currentQuestion.topicIndex];
+            const qId = this.state.currentQuestion.id;
+            const stats = this.state.reportData[topicName];
+            const prefix = this.state.isReviewMode ? 'review' : '';
+            if (understood) { stats[prefix + 'UnderstoodCount'] = (stats[prefix + 'UnderstoodCount'] || 0) + 1; } 
+            else { stats[prefix + 'NotUnderstoodCount'] = (stats[prefix + 'NotUnderstoodCount'] || 0) + 1; }
+            if (!this.state.isReviewMode) {
+                const notUnderstoodList = stats.notUnderstoodQuestions;
+                const index = notUnderstoodList.indexOf(qId);
+                if (understood && index > -1) { notUnderstoodList.splice(index, 1); } 
+                else if (!understood && index === -1) { notUnderstoodList.push(qId); }
+            }
+            if (this.state.isReviewMode) { this.loadNextReviewQuestion(); } 
+            else { this.advance(this.state.answeredCorrectly && understood); }
+        },
+        advance(success) {
+            if (success) {
+                this.state.reportData[this.data.topics[this.state.currentTopicIndex]].completedGroups++;
+                this.state.currentGroupIndex++;
+            }
+            this.loadQuestion();
+        },
+        startReview() {
+            this.state.isReviewMode = true;
+            this.state.reviewQueue = this.shuffleArray(Object.values(this.state.reportData).flatMap(d => d.notUnderstoodQuestions || []));
+            this.elements.modalOverlay.style.display = 'none';
+            this.elements.sidebar.style.display = 'none';
+            this.elements.modeIndicator.textContent = '復習モード';
+            this.loadNextReviewQuestion();
+        },
+        loadNextReviewQuestion() {
+            if (this.state.reviewQueue.length === 0) {
+                this.state.isReviewMode = false; this.elements.sidebar.style.display = 'block';
+                this.elements.modeIndicator.textContent = ''; alert('復習が完了しました！'); this.generateReport(); return;
+            }
+            this.state.currentQuestion = this.data.questions.find(q => q.id === this.state.reviewQueue.shift());
+            // 質問エリアのKaTeXレンダリングをクリア
+            this.elements.questionText.dataset.katexRendered = 'false';
+            this.displayQuestion();
+        },
+        generateReport() {
+            this.elements.reportStudentInfo.innerHTML = `<p><strong>出席番号:</strong> ${this.state.studentId}</p><p><strong>名前:</strong> ${this.state.studentName}</p>`;
+            this.elements.reportContent.innerHTML = `<h2 class="text-2xl font-bold text-gray-700 mb-4">学習成果</h2>` + this.generateReportTable(false);
+            const totalReviewAttempts = Object.values(this.state.reportData).reduce((s, d) => s + (d.reviewAttempts || 0), 0);
+            this.elements.reportReviewContent.innerHTML = totalReviewAttempts > 0 ? `<h2 class="text-2xl font-bold text-gray-700 mt-8 mb-4">復習モードの成果</h2>` + this.generateReportTable(true) : '';
+            let teacherHTML = '';
+            if (this.state.teacherModeHistory && this.state.teacherModeHistory.length > 0) {
+                teacherHTML = `<h2 class="text-2xl font-bold text-gray-700 mt-8 mb-4">先生モード利用履歴</h2><p>利用回数: ${this.state.teacherModeHistory.length}回</p><ul class="list-disc list-inside">`;
+                this.state.teacherModeHistory.forEach(ts => { teacherHTML += `<li>${new Date(ts).toLocaleString()}</li>`; });
+                teacherHTML += `</ul>`;
+            }
+            this.elements.reportTeacherModeInfo.innerHTML = teacherHTML;
+            let historyHTML = `<h2 class="text-2xl font-bold text-gray-700 mt-8 mb-4">学習の記録</h2><div class="border-l-2 border-sky-200 ml-3 pl-8 space-y-8 relative">`;
+            if (this.state.startedAt) { historyHTML += `<div class="relative"><div class="absolute -left-[42px] top-1 bg-sky-500 rounded-full h-5 w-5 border-4 border-white"></div><h3 class="font-bold text-sky-700">学習開始</h3><p class="text-gray-600">${new Date(this.state.startedAt).toLocaleString()}</p></div>`; }
+            if (this.state.resumedHistory && this.state.resumedHistory.length > 0) {
+                historyHTML += `<div class="relative"><div class="absolute -left-[42px] top-1 bg-yellow-500 rounded-full h-5 w-5 border-4 border-white"></div><h3 class="font-bold text-yellow-700">再開履歴 (${this.state.resumedHistory.length}回)</h3><ul class="list-disc list-inside text-gray-600 mt-1">`;
+                this.state.resumedHistory.forEach(ts => { historyHTML += `<li>${new Date(ts).toLocaleString()}</li>`; }); historyHTML += `</ul></div>`;
+            }
+            if (this.state.saveHistory && this.state.saveHistory.length > 0) {
+                historyHTML += `<div class="relative"><div class="absolute -left-[42px] top-1 bg-green-500 rounded-full h-5 w-5 border-4 border-white"></div><h3 class="font-bold text-green-700">進捗保存履歴 (${this.state.saveHistory.length}回)</h3><ul class="list-disc list-inside text-gray-600 mt-1">`;
+                this.state.saveHistory.forEach(ts => { historyHTML += `<li>${new Date(ts).toLocaleString()}</li>`; }); historyHTML += `</ul></div>`;
+            }
+            this.elements.reportHistorySection.innerHTML = historyHTML + `</div>`;
+            const totalNotUnderstood = Object.values(this.state.reportData).reduce((s, d) => s + (d.notUnderstoodQuestions?.length || 0), 0);
+            this.elements.reviewBtn.classList.toggle('hidden', totalNotUnderstood === 0);
+            if (totalNotUnderstood > 0) { this.elements.reviewBtn.textContent = `復習を開始する (${totalNotUnderstood}問)`; }
+            this.elements.modalOverlay.style.display = 'flex'; this.elements.startModal.style.display = 'none';
+            this.elements.reportModal.classList.remove('hidden', 'scale-95', 'opacity-0');
+            this.elements.reportModal.classList.add('scale-100', 'opacity-100');
+        },
+        generateReportTable(isReview) {
+            const prefix = isReview ? 'review' : '';
+            const header = isReview ? ['単元名', '挑戦数', '間違い数', '理解度'] : ['単元名', '挑戦数', '間違い数', '達成度', '理解度'];
+            let tableHTML = `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100">${header.map(h => `<th class="p-3 border-b-2 border-gray-200 font-bold ${h !== '単元名' ? 'text-center' : ''}">${h}</th>`).join('')}</tr></thead><tbody>`;
+            let totals = { attempts: 0, mistakes: 0, completed: 0, groups: 0, understood: 0, notUnderstood: 0 };
+            this.data.topics.forEach(topicName => {
+                const data = this.state.reportData[topicName];
+                const attempts = data[`${prefix}Attempts`] || 0; 
+                if (isReview && attempts === 0) return;
+                const mistakes = data[`${prefix}Mistakes`] || 0; 
+                const understood = data[`${prefix}UnderstoodCount`] || 0; 
+                const notUnderstood = data[`${prefix}NotUnderstoodCount`] || 0; 
+                const achievement = !isReview && data.totalGroups > 0 ? (data.completedGroups / data.totalGroups) * 100 : 0;
+                const understandingRate = (understood + notUnderstood) > 0 ? (understood / (understood + notUnderstood)) * 100 : 0;
+                totals.attempts += attempts; totals.mistakes += mistakes; totals.understood += understood; totals.notUnderstood += notUnderstood;
+                if (!isReview) { totals.completed += data.completedGroups; totals.groups += data.totalGroups; }
+                tableHTML += `<tr><td class="p-3 border-b border-gray-200">${topicName}</td><td class="p-3 border-b border-gray-200 text-center">${attempts}</td><td class="p-3 border-b border-gray-200 text-center">${mistakes}</td>
+                    ${!isReview ? `<td class="p-3 border-b border-gray-200"><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-blue-500 h-4 rounded-full text-xs text-white text-center leading-4" style="width: ${achievement.toFixed(0)}%">${achievement.toFixed(0)}%</div></div></td>` : ''}
+                    <td class="p-3 border-b border-gray-200"><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-purple-500 h-4 rounded-full text-xs text-white text-center leading-4" style="width: ${understandingRate.toFixed(0)}%">${understandingRate.toFixed(0)}%</div></div></td></tr>`;
+            });
+            const overallAchievement = !isReview && totals.groups > 0 ? (totals.completed / totals.groups) * 100 : 0;
+            const overallUnderstandingRate = (totals.understood + totals.notUnderstood) > 0 ? (totals.understood / (totals.understood + totals.notUnderstood)) * 100 : 0;
+            tableHTML += `</tbody><tfoot class="font-bold bg-gray-50"><tr><td class="p-3 border-t-2 border-gray-300">総合</td><td class="p-3 border-t-2 border-gray-300 text-center">${totals.attempts}</td><td class="p-3 border-t-2 border-gray-300 text-center">${totals.mistakes}</td>
+                        ${!isReview ? `<td class="p-3 border-t-2 border-gray-300"><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-green-500 h-4 rounded-full text-xs text-white text-center leading-4" style="width: ${overallAchievement.toFixed(0)}%">${overallAchievement.toFixed(0)}%</div></div></td>` : ''}
+                        <td class="p-3 border-t-2 border-gray-300"><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-purple-600 h-4 rounded-full text-xs text-white text-center leading-4" style="width: ${overallUnderstandingRate.toFixed(0)}%">${overallUnderstandingRate.toFixed(0)}%</div></div></td></tr></tfoot></table>`;
+            return tableHTML;
+        },
+        renderTOC() {
+            this.elements.toc.innerHTML = '';
+            if (this.state.isTeacherMode) {
+                this.data.topics.forEach((topic, index) => {
+                    const details = document.createElement('details'); details.className = 'toc-topic-group';
+                    if (index === this.state.currentTopicIndex) { details.open = true; }
+                    const summary = document.createElement('summary'); summary.textContent = topic; details.appendChild(summary);
+                    const questionList = document.createElement('ul'); questionList.className = 'ml-4 mt-1 space-y-1';
+                    const topicQuestions = this.data.questions.filter(q => q.topicIndex === index);
+                    topicQuestions.forEach(q => {
+                        const li = document.createElement('li'); const button = document.createElement('button');
+                        button.className = 'toc-question-btn';
+                        if (this.state.currentQuestion && q.id === this.state.currentQuestion.id) { button.classList.add('active'); }
+                        button.textContent = `Q${q.id}: ${q.question.substring(0, 25)}...`; button.title = q.question;
+                        button.onclick = () => this.jumpToQuestion(q.id);
+                        li.appendChild(button); questionList.appendChild(li);
+                    });
+                    details.appendChild(questionList); this.elements.toc.appendChild(details);
+                });
+            } else {
+                this.data.topics.forEach((topic, index) => {
+                    const li = document.createElement('li'); li.textContent = topic;
+                    li.className = 'toc-item p-3 rounded-md transition-colors';
+                    if (index < this.state.currentTopicIndex) { li.classList.add('completed'); } 
+                    else if (index === this.state.currentTopicIndex) { li.classList.add('active'); }
+                    this.elements.toc.appendChild(li);
+                });
+            }
+        },
+        shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        },
+        returnToStart() {
+            this.elements.modalOverlay.style.display = 'flex';
+            this.elements.reportModal.classList.add('hidden', 'scale-95', 'opacity-0');
+            this.elements.reportModal.classList.remove('scale-100', 'opacity-100');
+            this.elements.startModal.style.display = 'block';
+            this.elements.studentIdInput.value = ''; this.elements.studentNameInput.value = '';
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        app.init();
+    });
+    </script>
+</body>
+</html>
