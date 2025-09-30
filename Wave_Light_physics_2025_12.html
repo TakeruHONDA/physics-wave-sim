@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インタラクティブ物理学習：光波の世界</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+        }
+        .section-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .formula-box {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-left: 4px solid #0ea5e9;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: #0c4a6e;
+        }
+        .info-box {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            border-left: 4px solid #facc15;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: #78350f;
+        }
+        .animation-canvas {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            cursor: grab;
+        }
+        .animation-canvas:active {
+            cursor: grabbing;
+        }
+        
+        #waveCanvas {
+            cursor: crosshair;
+            background-color: #000;
+        }
+        #interferenceCanvas {
+            background-color: #fff;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            margin-bottom: 0.5em;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .control-group input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            transition: opacity .2s;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4a90e2;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4a90e2;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2em;
+            padding: 1.5em;
+            box-sizing: border-box;
+        }
+        .controls-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5em;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-sky-600 text-white text-center py-8">
+        <h1 class="text-4xl font-bold">インタラクティブ物理学習</h1>
+        <p class="text-xl mt-2">光波の世界を探求しよう</p>
+    </header>
+
+    <nav class="sticky-nav shadow-md">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex flex-wrap justify-center items-center gap-x-4 md:gap-x-6 py-3 text-sm md:text-base">
+                <a href="#section-reflection-refraction" class="text-gray-600 hover:text-sky-600 font-semibold transition">反射と屈折</a>
+                <a href="#section-lenses" class="text-gray-600 hover:text-sky-600 font-semibold transition">レンズの科学</a>
+                <a href="#section-interference" class="text-gray-600 hover:text-sky-600 font-semibold transition">波の干渉（ヤングの実験）</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-8 space-y-16">
+        
+        <section id="section-reflection-refraction" class="section-card">
+            <h2 class="text-3xl font-bold text-sky-700 mb-4">光の反射と屈折</h2>
+            <p class="mb-6 text-gray-700">光が異なる物質の境界に進むとき、一部は跳ね返り（反射）、一部は物質の中に入って進む方向を変えます（屈折）。これらの現象は、蜃気楼や光ファイバーなど、身の回りの様々な現象の原理となっています。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">反射と屈折の法則（スネルの法則）</h3>
+                    <canvas id="snellCanvas" class="animation-canvas w-full h-64"></canvas>
+                     <div class="mt-2">
+                        <label for="snellAngle" class="text-sm font-semibold">入射角 (i): <span id="snellAngleValue">45</span>°</label>
+                        <input id="snellAngle" type="range" min="0" max="89" value="45" class="w-full">
+                     </div>
+                      <div class="mt-2">
+                        <label for="snellN2" class="text-sm font-semibold">媒質2の屈折率 (n₂): <span id="snellN2Value">1.5</span> (媒質1: n₁=1.0)</label>
+                        <input id="snellN2" type="range" min="0.5" max="2.5" value="1.5" step="0.1" class="w-full">
+                     </div>
+                     <div class="mt-2 formula-box text-center text-sm">$n_1 \sin i = n_2 \sin r$</div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">全反射と光ファイバー</h3>
+                    <canvas id="totalInternalReflectionCanvas" class="animation-canvas w-full h-64"></canvas>
+                    <div class="mt-2">
+                        <label for="tirAngle" class="text-sm font-semibold">入射角 (i): <span id="tirAngleValue">30</span>° (n₁=1.5, n₂=1.0)</label>
+                        <input id="tirAngle" type="range" min="0" max="89" value="30" class="w-full">
+                    </div>
+                    <div class="mt-2 text-center">
+                        <p class="text-sm text-gray-600">臨界角 $\theta_c = \sin^{-1}(n_2/n_1) \approx 41.8^\circ$</p>
+                        <p id="tirStatus" class="font-bold text-lg mt-2"></p>
+                    </div>
+                    <p class="text-sm mt-2 text-gray-600">屈折率が大きい媒質から小さい媒質へ、臨界角以上の角度で光が入射すると、光は屈折せず全て反射します（全反射）。光ファイバーはこの原理を利用しています。</p>
+                </div>
+                 <div class="md:col-span-2 mt-4">
+                    <h3 class="text-xl font-semibold mb-2">蜃気楼 (Mirage)</h3>
+                    <canvas id="mirageCanvas" class="animation-canvas w-full h-48"></canvas>
+                    <p class="text-sm mt-2 text-gray-600">地表近くの空気が暖められると、空気の密度が不均一になり、屈折率が連続的に変化します。これにより、遠くの景色からの光が曲げられ、実際とは違う場所にあるように見えたり、反転して見えたりします。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-lenses" class="section-card">
+            <h2 class="text-3xl font-bold text-sky-700 mb-4">レンズの科学</h2>
+            <p class="mb-6 text-gray-700">レンズは光を屈折させることで、物体の像を作ります。ここでは単レンズから組み合わせレンズまで、インタラクティブなシミュレーションでその原理を体験します。</p>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">凸レンズ (実像と虚像)</h3>
+                    <canvas id="convexLensCanvas" class="animation-canvas w-full h-72"></canvas>
+                    <div class="mt-4">
+                        <label for="convexObjectDistance" class="font-semibold">物体距離 a: <span id="convexObjectDistanceValue">30</span></label>
+                        <input type="range" id="convexObjectDistance" min="1" max="50" value="30" step="0.5" class="w-full">
+                         <p class="text-sm text-gray-600">焦点距離 f = 15</p>
+                    </div>
+                    <div id="convexLensInfo" class="mt-2 p-2 bg-gray-100 rounded text-center"></div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">凹レンズ (虚像)</h3>
+                    <canvas id="concaveLensCanvas" class="animation-canvas w-full h-72"></canvas>
+                     <div class="mt-4">
+                        <label for="concaveObjectDistance" class="font-semibold">物体距離 a: <span id="concaveObjectDistanceValue">30</span></label>
+                        <input type="range" id="concaveObjectDistance" min="1" max="50" value="30" step="0.5" class="w-full">
+                        <p class="text-sm text-gray-600">焦点距離 f = -15</p>
+                    </div>
+                    <div id="concaveLensInfo" class="mt-2 p-2 bg-gray-100 rounded text-center"></div>
+                </div>
+            </div>
+             <div class="mt-8">
+                <h3 class="text-xl font-semibold mb-2">レンズの公式まとめ</h3>
+                 <div class="formula-box text-center text-lg">
+                    <p>写像公式: $ \frac{1}{a} + \frac{1}{b} = \frac{1}{f} $　　倍率: $ m = -\frac{b}{a} $</p>
+                 </div>
+                 <p class="text-sm mt-2 text-gray-600">a: 物体距離, b: 像距離, f: 焦点距離 (凸レンズは正, 凹レンズは負)。bが正なら実像、負なら虚像。mが正なら正立像、負なら倒立像。</p>
+            </div>
+             <div class="mt-8">
+                 <h3 class="text-xl font-semibold mb-2">組み合わせレンズ</h3>
+                <canvas id="combinedLensCanvas" class="animation-canvas w-full h-80"></canvas>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 text-sm">
+                    <div>
+                        <label for="combinedObjectDistance" class="font-semibold">物体距離 $a_1$: <span id="combinedObjectDistanceValue">150</span></label>
+                        <input type="range" id="combinedObjectDistance" min="10" max="500" value="150" step="1" class="w-full">
+                    </div>
+                     <div>
+                        <label for="combinedObjectHeight" class="font-semibold">物体の高さ: <span id="combinedObjectHeightValue">20</span></label>
+                        <input type="range" id="combinedObjectHeight" min="-50" max="50" value="20" step="1" class="w-full">
+                    </div>
+                    <div>
+                        <label for="lens1FocalLength" class="font-semibold">レンズ1 焦点距離 $f_1$: <span id="lens1FocalLengthValue">100</span></label>
+                        <input type="range" id="lens1FocalLength" min="-200" max="200" value="100" step="1" class="w-full">
+                    </div>
+                     <div>
+                        <label for="lens2FocalLength" class="font-semibold">レンズ2 焦点距離 $f_2$: <span id="lens2FocalLengthValue">120</span></label>
+                        <input type="range" id="lens2FocalLength" min="-200" max="200" value="120" step="1" class="w-full">
+                    </div>
+                    <div class="lg:col-span-4">
+                        <label for="lensSeparation" class="font-semibold">レンズ間距離 d: <span id="lensSeparationValue">250</span></label>
+                        <input type="range" id="lensSeparation" min="0" max="500" value="250" step="1" class="w-full">
+                    </div>
+                </div>
+                <div id="combinedLensInfo" class="mt-2 p-2 bg-gray-100 rounded text-center text-sm"></div>
+                <div id="combinedLensAdvancedInfo" class="mt-2 p-2 bg-sky-50 border border-sky-200 rounded text-center text-sm text-sky-800"></div>
+                <p class="text-sm mt-2 text-gray-600">複数のレンズを組み合わせることで、より複雑な光学系（カメラのズームレンズや望遠鏡など）を作ることができます。1枚目のレンズが作った像を、2枚目のレンズの物体として考えます。キャンバス上の物体をドラッグして動かすこともできますよ！</p>
+            </div>
+        </section>
+
+        <section id="section-interference" class="section-card">
+            <h2 class="text-3xl font-bold text-sky-700 mb-4">波の干渉（ヤングの実験）</h2>
+            
+            <div class="space-y-8 mb-12">
+                <div>
+                    <h3 class="text-2xl font-bold text-sky-600 mb-3 border-b-2 border-sky-200 pb-2">歴史：粒子か、波か</h3>
+                    <div class="text-gray-700 space-y-4">
+                        <p>17世紀から18世紀にかけて、科学界ではアイザック・ニュートンが提唱した光の「粒子説」が主流でした。光を微小な粒子の流れと考えるこの説は、光がまっすぐ進むこと（直進性）や反射をうまく説明できましたが、クリスティアーン・ホイヘンスらが提唱した「波動説」は、光がなぜ鮮明な影を作るのかを説明するのが難しく、影を潜めていました。</p>
+                        <p>この状況を覆したのが、1807年のトーマス・ヤングによる二重スリット実験です。もし光が粒子なら、2つのスリットを通り抜けた光はスクリーン上に2本の明るい線を描くだけのはずです。しかし、ヤングが実際に観測したのは、明るい部分と暗い部分が交互に並ぶ「干渉縞」でした。このパターンは、波が強め合ったり（建設的干渉）、弱め合ったり（破壊的干渉）することでしか生まれない、波特有の現象だったのです。このエレガントな実験は、光が波の性質を持つことを決定的に示し、ニュートンの権威に挑み、観測結果こそが科学の真理を判断するという原則を改めて示す画期的な出来事となりました。</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-bold text-sky-600 mb-3 border-b-2 border-sky-200 pb-2">数式とその説明</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">経路差と干渉条件</h4>
+                            <p class="text-gray-700 mb-4">ヤングの実験の鍵は、2つのスリット（S₁とS₂）からスクリーン上のある点（P）までの距離の差、つまり<strong class="text-sky-600">経路差</strong> $\Delta l = |S_2P - S_1P|$ です。この経路差が、光の波長 $\lambda$ の整数倍になるか、半整数倍になるかで、光が強め合うか弱め合うかが決まります。</p>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="formula-box">
+                                    <p class="font-bold text-center">明線の条件（強め合い）</p>
+                                    <p class="text-center mt-2 text-lg">$\Delta l = m\lambda$</p>
+                                    <p class="text-sm mt-1 text-center">($m = 0, 1, 2, \dots$)</p>
+                                </div>
+                                <div class="formula-box">
+                                    <p class="font-bold text-center">暗線の条件（弱め合い）</p>
+                                    <p class="text-center mt-2 text-lg">$\Delta l = (m + \frac{1}{2})\lambda$</p>
+                                    <p class="text-sm mt-1 text-center">($m = 0, 1, 2, \dots$)</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">経路差の近似式</h4>
+                            <p class="text-gray-700 mb-4">スクリーンからスリットまでの距離を $L$、スリットの間隔を $d$、スクリーン中心から測った距離を $x$ とします。実際の実験では、$L$ は $d$ や $x$ に比べて非常に大きい ($L \gg d, L \gg x$) ため、経路差 $\Delta l$ は以下の非常に便利な式で近似できます。</p>
+                             <div class="formula-box text-center text-lg">
+                                $\Delta l \approx \frac{dx}{L}$
+                             </div>
+                             <div class="info-box mt-4">
+                                <p class="font-bold mb-2">💡 近似式の導出（幾何学的考察）</p>
+                                <p class="text-sm text-gray-700">この近似は、$L$ が非常に長いために、2つのスリットから点Pへ向かう2本の光線がほぼ平行だと見なせることから導かれます。このとき、経路差 $\Delta l$ は、スリット間隔 $d$ と光線の角度 $\theta$ を用いて $\Delta l = d \sin\theta$ と表せます。さらに、角度 $\theta$ が非常に小さいので、$\sin\theta \approx \tan\theta$ という近似が成り立ちます。図形から $\tan\theta = \frac{x}{L}$ なので、これらを組み合わせると $\Delta l \approx d \cdot \frac{x}{L}$ となります。物理学では、こういう賢い「近似」が、複雑な現象をシンプルに理解する上でとても重要なんですよ。</p>
+                            </div>
+                            </div>
+                        
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">干渉縞の間隔</h4>
+                            <p class="text-gray-700 mb-4">上記の近似式と明線の条件を組み合わせることで、スクリーン中心から $m$ 番目の明線までの距離 $x_m$ は、次のように表されます。</p>
+                             <div class="formula-box text-center text-lg">
+                                $x_m = \frac{m\lambda L}{d}$
+                             </div>
+                             <p class="text-gray-700 my-4">この式から、隣り合う明線の間隔 $\Delta x$ は、$m$ の値によらずどこでも一定になることがわかります。この関係式が、シミュレーションの核心となります。</p>
+                             <div class="formula-box text-center text-lg">
+                                $\Delta x = x_{m+1} - x_m = \frac{\lambda L}{d}$
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="youngs-experiment-app">
+                 <div class="container">
+                    <h3 class="text-xl font-semibold mb-4 text-center">コントロールパネル</h3>
+                    <div class="controls-panel">
+                        <div class="control-group">
+                            <label for="wavelength">光の波長 (λ): <span id="wavelengthValue">550</span> nm</label>
+                            <input type="range" id="wavelength" min="400" max="700" value="550">
+                        </div>
+                        <div class="control-group">
+                            <label for="slitSeparation">スリット間隔 (d): <span id="slitSeparationValue">0.25</span> mm</label>
+                            <input type="range" id="slitSeparation" min="0.01" max="0.5" value="0.25" step="0.001">
+                        </div>
+                        <div class="control-group">
+                            <label for="screenDistance">スクリーン距離 (L): <span id="screenDistanceValue">2.5</span> m</label>
+                            <input type="range" id="screenDistance" min="0.5" max="5.0" value="2.5" step="0.1">
+                        </div>
+                    </div>
+                </div>
+                <div class="container">
+                    <h3 class="text-xl font-semibold mb-4 text-center">波のアニメーション (マウスを乗せて経路差を確認)</h3>
+                    <canvas id="waveCanvas" width="800" height="400"></canvas>
+                </div>
+                <div class="container">
+                    <h3 class="text-xl font-semibold mb-4 text-center">干渉縞の強度分布グラフ</h3>
+                    <canvas id="interferenceCanvas" width="800" height="200"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-6 bg-gray-100 mt-16">
+        <p class="text-gray-500">インタラクティブ物理学習 | 光波の世界</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- Smooth Scrolling ---
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // --- 共通ヘルパー関数 ---
+        const resizeCanvas = (canvas) => {
+            if (!canvas) return false;
+            const { width, height } = canvas.getBoundingClientRect();
+            if (canvas.width !== width || canvas.height !== height) {
+                canvas.width = width;
+                canvas.height = height;
+                return true;
+            }
+            return false;
+        };
+        
+        // --- ▼▼▼ 反射と屈折セクションのセットアップ ▼▼▼ ---
+        const setupReflectionAndRefraction = () => {
+            const snellCanvas = document.getElementById('snellCanvas');
+            if (snellCanvas) {
+                const ctx = snellCanvas.getContext('2d');
+                const angleSlider = document.getElementById('snellAngle');
+                const n2Slider = document.getElementById('snellN2');
+                const angleValue = document.getElementById('snellAngleValue');
+                const n2Value = document.getElementById('snellN2Value');
+                const drawSnell = () => {
+                    resizeCanvas(snellCanvas);
+                    const w = snellCanvas.width, h = snellCanvas.height, i_deg = parseFloat(angleSlider.value), n1 = 1.0, n2 = parseFloat(n2Slider.value);
+                    angleValue.textContent = i_deg.toFixed(0); n2Value.textContent = n2.toFixed(2);
+                    const i_rad = i_deg * Math.PI / 180, sin_r = (n1 / n2) * Math.sin(i_rad);
+                    let r_rad = Math.asin(sin_r);
+                    ctx.clearRect(0, 0, w, h);
+                    ctx.fillStyle = 'rgba(14, 165, 233, 0.1)'; ctx.fillRect(0, h/2, w, h/2);
+                    ctx.fillStyle = '#0c4a6e'; ctx.fillText('媒質1 (n₁=1.0)', 10, 20); ctx.fillText(`媒質2 (n₂=${n2.toFixed(2)})`, 10, h - 10);
+                    const originX = w/2, originY = h/2, rayLength = w/2;
+                    ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.moveTo(originX, 0); ctx.lineTo(originX, h); ctx.strokeStyle = '#9ca3af'; ctx.stroke(); ctx.setLineDash([]);
+                    ctx.beginPath(); ctx.moveTo(0, originY); ctx.lineTo(w, originY); ctx.strokeStyle = '#374151'; ctx.lineWidth = 2; ctx.stroke();
+                    const incidentX = originX - rayLength * Math.sin(i_rad), incidentY = originY - rayLength * Math.cos(i_rad);
+                    ctx.beginPath(); ctx.moveTo(incidentX, incidentY); ctx.lineTo(originX, originY); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 3; ctx.stroke();
+                    const reflectedX = originX + rayLength * Math.sin(i_rad), reflectedY = originY - rayLength * Math.cos(i_rad);
+                    ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(reflectedX, reflectedY); ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 2; ctx.globalAlpha = 0.8; ctx.stroke(); ctx.globalAlpha = 1.0;
+                    if (Math.abs(sin_r) <= 1) {
+                        const refractedX = originX + rayLength * Math.sin(r_rad), refractedY = originY + rayLength * Math.cos(r_rad);
+                        ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(refractedX, refractedY); ctx.strokeStyle = '#f97316'; ctx.lineWidth = 3; ctx.stroke();
+                    }
+                };
+                angleSlider.addEventListener('input', drawSnell); n2Slider.addEventListener('input', drawSnell); 
+                new ResizeObserver(drawSnell).observe(snellCanvas); drawSnell();
+            }
+            const tirCanvas = document.getElementById('totalInternalReflectionCanvas');
+            if (tirCanvas) {
+                const ctx = tirCanvas.getContext('2d');
+                const angleSlider = document.getElementById('tirAngle');
+                const angleValue = document.getElementById('tirAngleValue');
+                const statusText = document.getElementById('tirStatus');
+                const n1 = 1.5, n2 = 1.0, criticalAngleDeg = Math.asin(n2 / n1) * 180 / Math.PI;
+                const drawTIR = () => {
+                    resizeCanvas(tirCanvas);
+                    const w = tirCanvas.width, h = tirCanvas.height, i_deg = parseFloat(angleSlider.value);
+                    angleValue.textContent = i_deg.toFixed(0);
+                    const i_rad = i_deg * Math.PI / 180;
+                    ctx.clearRect(0, 0, w, h);
+                    ctx.fillStyle = 'rgba(14, 165, 233, 0.1)'; ctx.fillRect(0, 0, w, h/2);
+                    ctx.fillStyle = '#0c4a6e'; ctx.fillText(`媒質2 (空気, n₂=${n2.toFixed(1)})`, 10, 20); ctx.fillText(`媒質1 (ガラス, n₁=${n1.toFixed(1)})`, 10, h - 10);
+                    const originX = w / 2, originY = h / 2, rayLength = w / 2;
+                    ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.moveTo(originX, 0); ctx.lineTo(originX, h); ctx.strokeStyle = '#9ca3af'; ctx.stroke(); ctx.setLineDash([]);
+                    ctx.beginPath(); ctx.moveTo(0, originY); ctx.lineTo(w, originY); ctx.strokeStyle = '#374151'; ctx.lineWidth = 2; ctx.stroke();
+                    const incidentX = originX - rayLength * Math.sin(i_rad), incidentY = originY + rayLength * Math.cos(i_rad);
+                    ctx.beginPath(); ctx.moveTo(incidentX, incidentY); ctx.lineTo(originX, originY); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.stroke();
+                    const reflectedX = originX + rayLength * Math.sin(i_rad), reflectedY = originY + rayLength * Math.cos(i_rad);
+                    if (i_deg > criticalAngleDeg) {
+                        statusText.textContent = '全反射'; statusText.className = 'font-bold text-lg mt-2 text-red-500';
+                        ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(reflectedX, reflectedY); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.stroke();
+                    } else {
+                        statusText.textContent = '一部反射・一部屈折'; statusText.className = 'font-bold text-lg mt-2 text-blue-500';
+                        ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(reflectedX, reflectedY); ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2; ctx.globalAlpha = 0.7; ctx.stroke(); ctx.globalAlpha = 1.0;
+                        const sin_r = (n1 / n2) * Math.sin(i_rad), r_rad = Math.asin(sin_r);
+                        const refractedX = originX + rayLength * Math.sin(r_rad), refractedY = originY - rayLength * Math.cos(r_rad);
+                        ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(refractedX, refractedY); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.stroke();
+                    }
+                };
+                angleSlider.addEventListener('input', drawTIR); 
+                new ResizeObserver(drawTIR).observe(tirCanvas); drawTIR();
+            }
+            const mirageCanvas = document.getElementById('mirageCanvas');
+            if(mirageCanvas) {
+                const ctx = mirageCanvas.getContext('2d');
+                let time = 0;
+                const drawMirage = () => {
+                    resizeCanvas(mirageCanvas);
+                    const w = mirageCanvas.width, h = mirageCanvas.height;
+                    ctx.clearRect(0, 0, w, h);
+                    const sky = ctx.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#87ceeb'); sky.addColorStop(1, '#f0f8ff');
+                    ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+                    ctx.fillStyle = '#d2b48c'; ctx.fillRect(0, h * 0.8, w, h * 0.2);
+                    const treeX = w * 0.8, treeY = h * 0.8;
+                    ctx.fillStyle = '#8B4513'; ctx.fillRect(treeX, treeY - 50, 10, 50);
+                    ctx.fillStyle = '#008000'; ctx.beginPath(); ctx.arc(treeX + 5, treeY - 50, 25, Math.PI, 2 * Math.PI); ctx.fill();
+                    ctx.save(); ctx.globalAlpha = 0.5; ctx.translate(treeX, treeY); ctx.scale(1, -1);
+                    ctx.fillStyle = '#8B4513'; ctx.fillRect(0, -2, 10, 50);
+                    ctx.fillStyle = '#008000'; ctx.beginPath(); ctx.arc(5, -50, 25, Math.PI, 2 * Math.PI); ctx.fill();
+                    ctx.restore();
+                    ctx.beginPath(); ctx.moveTo(treeX, treeY - 60);
+                    ctx.quadraticCurveTo(w * 0.5, h * 0.8 + 10 + Math.sin(time) * 2, w * 0.1, h * 0.6);
+                    ctx.strokeStyle = `rgba(255, 255, 100, ${0.5 + Math.sin(time * 1.5) * 0.2})`;
+                    ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+                    ctx.fillStyle = 'black'; ctx.fillText('👁️', w * 0.1 - 15, h * 0.6 + 5);
+                    time += 0.05; requestAnimationFrame(drawMirage);
+                };
+                drawMirage();
+            }
+        };
+
+        // --- ▼▼▼ レンズセクションのセットアップ ▼▼▼ ---
+        const setupLensSimulations = () => {
+            function calculateSystemProperties(f1, f2, d) {
+                const combinedFocalLength = (f1 * f2) / (f1 + f2 - d);
+                const h1_pos = (combinedFocalLength * d) / f2;
+                const h2_pos = -(combinedFocalLength * d) / f1;
+                return { combinedFocalLength, h1_pos, h2_pos };
+            }
+
+            function traceSystem(objectDist, objectHeight, f1, f2, d) {
+                if (Math.abs(objectDist - f1) < 1e-6) {
+                    return { finalImage: null, intermediateImage: null, totalMag: Infinity };
+                }
+                const image1Dist = 1 / (1 / f1 - 1 / objectDist);
+                const mag1 = -image1Dist / objectDist;
+                const image1Height = objectHeight * mag1;
+                const intermediateImage = { distance: image1Dist, height: image1Height };
+
+                const object2Dist = d - image1Dist;
+
+                if (Math.abs(object2Dist - f2) < 1e-6) {
+                    return { finalImage: null, intermediateImage, totalMag: Infinity };
+                }
+                const image2Dist = 1 / (1 / f2 - 1 / object2Dist);
+                const mag2 = -image2Dist / object2Dist;
+                const finalImageHeight = image1Height * mag2;
+                const finalImage = { distance: image2Dist, height: finalImageHeight };
+                const totalMag = mag1 * mag2;
+
+                return { finalImage, intermediateImage, totalMag };
+            }
+
+            const drawArrow = (ctx, x, y_base, height, color, lineWidth, isDashed = false) => {
+                if (!isFinite(height)) return;
+                const tipY = y_base - height; const wingOffset = height > 0 ? 7 : -7;
+                ctx.beginPath(); ctx.moveTo(x, y_base); ctx.lineTo(x, tipY);
+                ctx.moveTo(x, tipY); ctx.lineTo(x - 5, tipY + wingOffset);
+                ctx.moveTo(x, tipY); ctx.lineTo(x + 5, tipY + wingOffset);
+                ctx.strokeStyle = color; ctx.lineWidth = lineWidth;
+                if (isDashed) { ctx.setLineDash([4, 4]); }
+                ctx.stroke(); ctx.setLineDash([]);
+            };
+            
+            const drawLensShape = (ctx, x, y, height, f) => {
+                 const bulge = 15; const topY = y - height/2, bottomY = y + height/2;
+                 ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(191, 219, 254, 0.5)';
+                 ctx.beginPath();
+                 if (f > 0) {
+                     ctx.moveTo(x, topY);
+                     ctx.bezierCurveTo(x + bulge, topY + height/3, x + bulge, bottomY - height/3, x, bottomY);
+                     ctx.bezierCurveTo(x - bulge, bottomY - height/3, x - bulge, topY + height/3, x, topY);
+                 } else {
+                     const edgeWidth = 12; const centerWidth = 4;
+                     ctx.moveTo(x - edgeWidth, topY);
+                     ctx.quadraticCurveTo(x - centerWidth, y, x - edgeWidth, bottomY);
+                     ctx.lineTo(x + edgeWidth, bottomY);
+                     ctx.quadraticCurveTo(x + centerWidth, y, x + edgeWidth, topY);
+                     ctx.closePath();
+                 }
+                 ctx.closePath(); ctx.fill(); ctx.stroke();
+            };
+            
+            const drawConvexLensSystem = (canvas, slider, infoDiv, f) => {
+                const ctx = canvas.getContext('2d');
+                const valueSpan = slider.previousElementSibling.querySelector('span');
+                
+                const draw = () => {
+                    resizeCanvas(canvas);
+                    const w = canvas.width, h = canvas.height, scale = w / 100, centerY = h / 2, centerX = w / 2;
+                    const a = parseFloat(slider.value);
+                    valueSpan.textContent = a.toFixed(1);
+
+                    let b, m;
+                    if (Math.abs(a - f) < 0.1) { b = Infinity; m = Infinity; } 
+                    else { b = 1 / (1/f - 1/a); m = -b / a; }
+
+                    ctx.clearRect(0, 0, w, h);
+                    
+                    const objectHeight = 20, objectX = centerX - a * scale;
+                    const imageX = centerX + b * scale, imageHeight = objectHeight * m;
+                    const rayStartY = centerY - objectHeight;
+                    const imageTipY = centerY - imageHeight;
+
+                    ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(w, centerY); ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1; ctx.stroke();
+                    drawLensShape(ctx, centerX, centerY, h*0.8, f);
+
+                    const focusF2_x = centerX + f * scale, focusF1_x = centerX - f * scale;
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillText('F₂', focusF2_x - 3, centerY - 10); ctx.beginPath(); ctx.arc(focusF2_x, centerY, 3, 0, 2*Math.PI); ctx.fill();
+                    ctx.fillText("F₁", focusF1_x - 10, centerY - 10); ctx.beginPath(); ctx.arc(focusF1_x, centerY, 3, 0, 2*Math.PI); ctx.fill();
+                    
+                    drawArrow(ctx, objectX, centerY, objectHeight, '#f97316', 3);
+
+                    if (isFinite(b)) {
+                        drawArrow(ctx, imageX, centerY, imageHeight, b > 0 ? '#16a34a' : '#6d28d9', 3, b < 0);
+                        ctx.lineWidth = 1;
+
+                        ctx.strokeStyle = '#d946ef';
+                        ctx.beginPath();
+                        ctx.moveTo(objectX, rayStartY);
+                        ctx.lineTo(centerX, rayStartY);
+                        if (b > 0) {
+                            ctx.lineTo(imageX, imageTipY);
+                        } else {
+                            const slope = (rayStartY - imageTipY) / (centerX - imageX);
+                            ctx.lineTo(w, rayStartY + slope * (w-centerX));
+                        }
+                        ctx.stroke();
+
+                        ctx.strokeStyle = '#22c55e';
+                        ctx.beginPath();
+                        ctx.moveTo(objectX, rayStartY);
+                        if (b > 0) {
+                             ctx.lineTo(imageX, imageTipY);
+                        } else {
+                            ctx.lineTo(w, centerY + (centerY - rayStartY) / (centerX - objectX) * (w - centerX));
+                        }
+                        ctx.stroke();
+                        
+                        if (b < 0) {
+                            ctx.save();
+                            ctx.setLineDash([2, 3]);
+                            ctx.strokeStyle = '#a3a3a3';
+                            ctx.beginPath(); ctx.moveTo(imageX, imageTipY); ctx.lineTo(centerX, rayStartY); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(imageX, imageTipY); ctx.lineTo(objectX, rayStartY); ctx.stroke();
+                            ctx.restore();
+                        }
+                    }
+
+                    let infoText = `像距離 b: ${isFinite(b)?b.toFixed(1):'∞'}<br>倍率 m: ${isFinite(m)?m.toFixed(2):'∞'}<br>`;
+                    if (isFinite(b)) { infoText += `種類: ${b>0?'実像':'虚像'}, ${m<0?'倒立':'正立'}`; } 
+                    else { infoText += '像はできない'; }
+                    infoDiv.innerHTML = infoText;
+                };
+                slider.addEventListener('input', draw);
+                new ResizeObserver(draw).observe(canvas);
+                draw();
+            };
+            
+            const drawConcaveLensSystem = (canvas, slider, infoDiv, f) => {
+                const ctx = canvas.getContext('2d');
+                const valueSpan = slider.previousElementSibling.querySelector('span');
+
+                const draw = () => {
+                    resizeCanvas(canvas);
+                    const w = canvas.width, h = canvas.height, scale = w / 100, centerY = h / 2, centerX = w / 2;
+                    const a = parseFloat(slider.value);
+                    valueSpan.textContent = a.toFixed(1);
+
+                    const b = 1 / (1/f - 1/a);
+                    const m = -b / a;
+
+                    ctx.clearRect(0, 0, w, h);
+
+                    const objectHeight = 40, objectX = centerX - a * scale, imageX = centerX + b * scale, imageHeight = objectHeight * m;
+                    const rayStartY = centerY - objectHeight;
+                    const imageTipY = centerY - imageHeight;
+
+                    ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(w, centerY); ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1; ctx.stroke();
+                    drawLensShape(ctx, centerX, centerY, h*0.8, f);
+                   
+                    const focusF1_x = centerX + f * scale, focusF2_x = centerX - f*scale; 
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillText('F₁', focusF1_x - 10, centerY - 10); ctx.beginPath(); ctx.arc(focusF1_x, centerY, 3, 0, 2 * Math.PI); ctx.fill();
+                    ctx.fillText("F₂", focusF2_x - 3, centerY - 10); ctx.beginPath(); ctx.arc(focusF2_x, centerY, 3, 0, 2 * Math.PI); ctx.fill();
+                    
+                    drawArrow(ctx, objectX, centerY, objectHeight, '#f97316', 3);
+                    drawArrow(ctx, imageX, centerY, imageHeight, '#6d28d9', 3, true);
+                    
+                    ctx.lineWidth = 1;
+
+                    ctx.strokeStyle = '#d946ef'; 
+                    ctx.beginPath(); 
+                    ctx.moveTo(objectX, rayStartY); ctx.lineTo(centerX, rayStartY);
+                    const slope1 = (rayStartY - centerY) / (centerX - focusF1_x);
+                    ctx.lineTo(w, rayStartY + slope1 * (w - centerX)); 
+                    ctx.stroke();
+                    
+                    ctx.strokeStyle = '#22c55e';
+                    ctx.beginPath(); 
+                    ctx.moveTo(objectX, rayStartY); 
+                    const slope2 = (rayStartY - centerY) / (objectX - centerX);
+                    ctx.lineTo(w, centerY + slope2 * (w - centerX));
+                    ctx.stroke();
+
+                    ctx.save(); 
+                    ctx.setLineDash([2, 3]); 
+                    ctx.strokeStyle = '#a3a3a3';
+                    ctx.beginPath(); ctx.moveTo(imageX, imageTipY); ctx.lineTo(centerX, rayStartY); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(imageX, imageTipY); ctx.lineTo(objectX, rayStartY); ctx.stroke();
+                    ctx.restore();
+
+                    let infoText = `像距離 b: ${b.toFixed(1)}<br>倍率 m: ${m.toFixed(2)}<br>`;
+                    infoText += `種類: 虚像, 正立`;
+                    infoDiv.innerHTML = infoText;
+                };
+                slider.addEventListener('input', draw);
+                new ResizeObserver(draw).observe(canvas);
+                draw();
+            };
+
+            const setupCombinedLensSystem = () => {
+                const canvas = document.getElementById('combinedLensCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                
+                const sliders = { a1: document.getElementById('combinedObjectDistance'), h1: document.getElementById('combinedObjectHeight'), f1: document.getElementById('lens1FocalLength'), f2: document.getElementById('lens2FocalLength'), d: document.getElementById('lensSeparation') };
+                const values = { a1: document.getElementById('combinedObjectDistanceValue'), h1: document.getElementById('combinedObjectHeightValue'), f1: document.getElementById('lens1FocalLengthValue'), f2: document.getElementById('lens2FocalLengthValue'), d: document.getElementById('lensSeparationValue') };
+                
+                const infoDiv = document.getElementById('combinedLensInfo');
+                const advancedInfoDiv = document.getElementById('combinedLensAdvancedInfo');
+
+                let config = { object: { distance: 100, height: 20 }, lens1: { focalLength: 50 }, lens2: { focalLength: 60 }, separation: 185, };
+                let isDragging = false, dragStartX = 0, initialObjectDistance = config.object.distance;
+
+                const draw = () => {
+                    resizeCanvas(canvas);
+                    const w = canvas.width, h = canvas.height, scale = w / 600, centerY = h / 2;
+                    const { object, lens1, lens2, separation } = config;
+
+                    values.a1.textContent = object.distance.toFixed(1); values.h1.textContent = object.height.toFixed(1);
+                    values.f1.textContent = lens1.focalLength.toFixed(1); values.f2.textContent = lens2.focalLength.toFixed(1); values.d.textContent = separation.toFixed(1);
+
+                    const traceResult = traceSystem(object.distance, object.height, lens1.focalLength, lens2.focalLength, separation);
+                    const systemProps = calculateSystemProperties(lens1.focalLength, lens2.focalLength, separation);
+                    const { finalImage, intermediateImage, totalMag } = traceResult;
+
+                    ctx.clearRect(0, 0, w, h);
+
+                    const lens1X = w / 2 - (separation / 2) * scale, lens2X = w / 2 + (separation / 2) * scale;
+                    const objectX = lens1X - object.distance * scale, rayStartY = centerY - object.height * scale;
+                    const intermediateImageX = intermediateImage ? lens1X + intermediateImage.distance * scale : NaN;
+                    const intermediateImageY = intermediateImage ? centerY - intermediateImage.height * scale : NaN;
+                    const finalImageX = finalImage ? lens2X + finalImage.distance * scale : NaN;
+                    const finalImageY = finalImage ? centerY - finalImage.height * scale : NaN;
+
+                    ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(w, centerY); ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); ctx.stroke(); ctx.setLineDash([]);
+                    drawLensShape(ctx, lens1X, centerY, h * 0.9, lens1.focalLength);
+                    drawLensShape(ctx, lens2X, centerY, h * 0.9, lens2.focalLength);
+                    
+                    ctx.fillStyle = '#ef4444';
+                    const f1_x = lens1X - lens1.focalLength * scale, f1_prime_x = lens1X + lens1.focalLength * scale;
+                    const f2_x = lens2X - lens2.focalLength * scale, f2_prime_x = lens2X + lens2.focalLength * scale;
+                    ctx.fillText("F₁", f1_x - 10, centerY - 10); ctx.beginPath(); ctx.arc(f1_x, centerY, 3, 0, 2*Math.PI); ctx.fill();
+                    ctx.fillText("F₁'", f1_prime_x - 5, centerY - 10); ctx.beginPath(); ctx.arc(f1_prime_x, centerY, 3, 0, 2*Math.PI); ctx.fill();
+                    ctx.fillText("F₂", f2_x - 10, centerY - 10); ctx.beginPath(); ctx.arc(f2_x, centerY, 3, 0, 2*Math.PI); ctx.fill();
+                    ctx.fillText("F₂'", f2_prime_x - 5, centerY - 10); ctx.beginPath(); ctx.arc(f2_prime_x, centerY, 3, 0, 2*Math.PI); ctx.fill();
+
+                    drawArrow(ctx, objectX, centerY, object.height * scale, '#f97316', 3);
+                    if (intermediateImage) { drawArrow(ctx, intermediateImageX, centerY, intermediateImage.height * scale, '#fb923c', 2, true); }
+                    if (finalImage) { drawArrow(ctx, finalImageX, centerY, finalImage.height * scale, totalMag < 0 ? '#16a34a' : '#6d28d9', 3); }
+                    
+                    ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
+
+                    ctx.strokeStyle = '#d946ef'; ctx.beginPath(); ctx.moveTo(objectX, rayStartY); ctx.lineTo(lens1X, rayStartY);
+                    if (isFinite(intermediateImageX)) {
+                        ctx.lineTo(intermediateImageX, intermediateImageY); ctx.lineTo(lens2X, intermediateImageY);
+                        if (isFinite(finalImageX)) { ctx.lineTo(finalImageX, finalImageY); } 
+                        else { const slope = (intermediateImageY - centerY) / (lens2X - f2_x); ctx.lineTo(w, intermediateImageY + slope * (w-lens2X)); }
+                    } else { ctx.lineTo(w, rayStartY); }
+                    ctx.stroke();
+
+                    ctx.strokeStyle = '#22c55e'; ctx.beginPath(); ctx.moveTo(objectX, rayStartY);
+                    if (isFinite(intermediateImageX)) {
+                        ctx.lineTo(intermediateImageX, intermediateImageY); ctx.lineTo(finalImageX, finalImageY);
+                    } else { const slope = (rayStartY-centerY)/(lens1X - objectX); ctx.lineTo(w, centerY + slope * (w-lens1X)); }
+                    ctx.stroke();
+                    ctx.globalAlpha = 1.0;
+
+                    const formatNum = (n) => isFinite(n) ? n.toFixed(1) : '∞';
+                    infoDiv.innerHTML = `中間像 b₁: ${formatNum(intermediateImage?.distance)}, m₁: ${formatNum(intermediateImage ? -intermediateImage.distance/object.distance : Infinity)} | 物体 a₂: ${formatNum(intermediateImage ? separation - intermediateImage.distance : '∞')}<br>最終像 b₂: ${formatNum(finalImage?.distance)}, 総合倍率 M: ${formatNum(totalMag)}`;
+                    advancedInfoDiv.innerHTML = `合成焦点距離 f: ${formatNum(systemProps.combinedFocalLength)} | 主平面H₁ (L₁から): ${formatNum(systemProps.h1_pos)}, H₂ (L₂から): ${formatNum(systemProps.h2_pos)}`;
+                };
+                
+                const updateConfig = (key, value) => {
+                     const newConfig = { ...config }; const keys = key.split('.');
+                     if (keys.length === 2) { newConfig[keys[0]][keys[1]] = value; } else { newConfig[keys[0]] = value; }
+                     config = newConfig; if(sliders[keys[0]]) sliders[keys[0]].value = value;
+                     draw();
+                };
+
+                for (const key in sliders) {
+                    const fullKey = key === 'a1' ? 'object.distance' : key === 'h1' ? 'object.height' : key === 'f1' ? 'lens1.focalLength' : key === 'f2' ? 'lens2.focalLength' : 'separation';
+                    sliders[key].addEventListener('input', (e) => updateConfig(fullKey, parseFloat(e.target.value)));
+                }
+                
+                canvas.addEventListener('mousedown', (e) => { isDragging = true; dragStartX = e.clientX; initialObjectDistance = config.object.distance; canvas.style.cursor = 'grabbing'; });
+                window.addEventListener('mouseup', () => { isDragging = false; canvas.style.cursor = 'grab'; });
+                window.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const dx = e.clientX - dragStartX; const scale = canvas.width / 600; const newDist = initialObjectDistance - (dx / scale);
+                        if (newDist > 0) { updateConfig('object.distance', newDist); }
+                    }
+                });
+
+                new ResizeObserver(draw).observe(canvas);
+                draw();
+            }
+
+            const convexLensCanvas = document.getElementById('convexLensCanvas');
+            if (convexLensCanvas) { drawConvexLensSystem(convexLensCanvas, document.getElementById('convexObjectDistance'), document.getElementById('convexLensInfo'), 15); }
+
+            const concaveLensCanvas = document.getElementById('concaveLensCanvas');
+            if (concaveLensCanvas) { drawConcaveLensSystem(concaveLensCanvas, document.getElementById('concaveObjectDistance'), document.getElementById('concaveLensInfo'), -15); }
+
+            setupCombinedLensSystem();
+        };
+
+        const setupYoungsExperiment = () => {
+       	    const waveCanvas = document.getElementById('waveCanvas');
+            if (!waveCanvas) return;
+	    const waveCtx = waveCanvas.getContext('2d');
+	    const interferenceCanvas = document.getElementById('interferenceCanvas');
+	    const interferenceCtx = interferenceCanvas.getContext('2d');
+	    
+	    const wavelengthSlider = document.getElementById('wavelength');
+	    const slitSeparationSlider = document.getElementById('slitSeparation');
+	    const screenDistanceSlider = document.getElementById('screenDistance');
+	    
+	    const wavelengthValue = document.getElementById('wavelengthValue');
+	    const slitSeparationValue = document.getElementById('slitSeparationValue');
+	    const screenDistanceValue = document.getElementById('screenDistanceValue');
+
+	    let params = {};
+	    let scale = {};
+	    let t = 0;
+	    let animationId;
+	    let mousePos = null;
+	    let screenX = 0;
+	    const waveSpeed = 0.25;
+	    
+	    function setup() {
+		updateParams();
+		addEventListeners();
+		startAnimation();
+	    }
+	    function updateParams() {
+		params.lambda = parseFloat(wavelengthSlider.value);
+		params.d = parseFloat(slitSeparationSlider.value);
+		params.L = parseFloat(screenDistanceSlider.value);
+        
+		const physicalWidthMM = 5; 
+		scale.pxPerMM = waveCanvas.width / physicalWidthMM;
+		scale.mmPerPx = physicalWidthMM / waveCanvas.width;
+		
+		wavelengthValue.textContent = params.lambda.toFixed(0);
+		slitSeparationValue.textContent = params.d.toFixed(3);
+		screenDistanceValue.textContent = params.L.toFixed(1);
+
+		const minL = 0.5, maxL = 5.0;
+		const minScreenX = waveCanvas.width * 0.25;
+		const maxScreenX = waveCanvas.width * 0.95;
+		screenX = minScreenX + ((params.L - minL) / (maxL - minL)) * (maxScreenX - minScreenX);
+        
+		const color = wavelengthToRgb(params.lambda);
+		const thumbStyle = `
+            input[type="range"]#wavelength::-webkit-slider-thumb { background: rgb(${color.r}, ${color.g}, ${color.b}); }
+            input[type="range"]#wavelength::-moz-range-thumb { background: rgb(${color.r}, ${color.g}, ${color.b}); }
+        `;
+		let styleSheet = document.getElementById('slider-color-style');
+		if (!styleSheet) {
+		    styleSheet = document.createElement('style');
+		    styleSheet.id = 'slider-color-style';
+		    document.head.appendChild(styleSheet);
+		}
+		styleSheet.textContent = thumbStyle;
+	    }
+
+	    function addEventListeners() {
+		[wavelengthSlider, slitSeparationSlider, screenDistanceSlider].forEach(slider => {
+		    slider.addEventListener('input', updateParams);
+		});
+		
+		waveCanvas.addEventListener('mousemove', e => {
+		    const rect = waveCanvas.getBoundingClientRect();
+		    mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+		});
+		waveCanvas.addEventListener('mouseleave', () => { mousePos = null; });
+	    }
+
+	    function animate() {
+		t += 1;
+		drawWaves();
+		drawInterferenceGraph();
+		if (mousePos) {
+		    drawPathDifference(mousePos.x, mousePos.y);
+		}
+		animationId = requestAnimationFrame(animate);
+	    }
+    
+	    function startAnimation() {
+		if (animationId) cancelAnimationFrame(animationId);
+		animate();
+	    }
+    
+	    function drawWaves() {
+		const width = waveCanvas.width;
+		const height = waveCanvas.height;
+
+		waveCtx.fillStyle = 'black';
+		waveCtx.fillRect(0, 0, width, height);
+
+		const slitYCenter = height / 2;
+		const slitX = width * 0.1;
+		const slitSeparationPx = params.d * scale.pxPerMM;
+		const s1 = { x: slitX, y: slitYCenter - slitSeparationPx / 2 };
+		const s2 = { x: slitX, y: slitYCenter + slitSeparationPx / 2 };
+        
+		const base_lambda_px = 10;
+		const visual_lambda_px = base_lambda_px * (params.lambda / 400.0);
+		const color = wavelengthToRgb(params.lambda);
+		waveCtx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.8)`;
+		waveCtx.lineWidth = 2;
+
+		const maxRadius = width;
+		const phaseOffset = (t * waveSpeed) % visual_lambda_px;
+
+		[s1, s2].forEach(slit => {
+		    for (let r = phaseOffset; r < maxRadius; r += visual_lambda_px) {
+			waveCtx.beginPath();
+			waveCtx.arc(slit.x, slit.y, r, 0, 2 * Math.PI);
+			waveCtx.stroke();
+		    }
+		});
+
+		const slitVisualWidthPx = 12;
+		waveCtx.strokeStyle = 'rgba(200, 200, 200, 0.9)';
+		waveCtx.lineWidth = 4;
+        
+		waveCtx.beginPath();
+		waveCtx.moveTo(slitX, 0);
+		waveCtx.lineTo(slitX, s1.y - slitVisualWidthPx / 2);
+		waveCtx.moveTo(slitX, s1.y + slitVisualWidthPx / 2);
+		waveCtx.lineTo(slitX, s2.y - slitVisualWidthPx / 2);
+		waveCtx.moveTo(slitX, s2.y + slitVisualWidthPx / 2);
+		waveCtx.lineTo(slitX, height);
+		waveCtx.stroke();
+	
+		waveCtx.fillStyle = "white";
+		waveCtx.beginPath();
+		waveCtx.arc(s1.x, s1.y, 4, 0, 2 * Math.PI);
+		waveCtx.arc(s2.x, s2.y, 4, 0, 2 * Math.PI);
+		waveCtx.fill();
+        
+		for (let y_px = 0; y_px < height; y_px++) {
+		    const dx1 = screenX - s1.x, dy1 = y_px - s1.y;
+		    const dx2 = screenX - s2.x, dy2 = y_px - s2.y;
+		    const r1_px = Math.sqrt(dx1*dx1 + dy1*dy1);
+		    const r2_px = Math.sqrt(dx2*dx2 + dy2*dy2);
+		    const pathDiff_px = Math.abs(r1_px - r2_px);
+		    const phaseDiff_visual = (2 * Math.PI * pathDiff_px) / visual_lambda_px;
+		    const intensity = Math.pow(Math.cos(phaseDiff_visual / 2), 2);
+		    waveCtx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`;
+		    waveCtx.fillRect(screenX, y_px, 50, 1);
+		}
+        
+		waveCtx.beginPath();
+		waveCtx.moveTo(screenX, 0);
+		waveCtx.lineTo(screenX, height);
+		waveCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+		waveCtx.lineWidth = 4;
+		waveCtx.setLineDash([6, 6]);
+		waveCtx.stroke();
+		waveCtx.setLineDash([]);
+        
+		waveCtx.save();
+		waveCtx.translate(screenX - 15, height / 2); 
+		waveCtx.rotate(-Math.PI / 2);
+		waveCtx.font = 'bold 14px "Noto Sans JP", sans-serif';
+		waveCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+		waveCtx.textAlign = 'center';
+		waveCtx.fillText('スクリーン (Screen)', 0, 0);
+		waveCtx.restore();
+        
+		const arrowY = height - 20;
+		waveCtx.beginPath();
+		waveCtx.moveTo(slitX, arrowY);
+		waveCtx.lineTo(screenX, arrowY);
+		waveCtx.moveTo(slitX + 5, arrowY - 5); waveCtx.lineTo(slitX, arrowY); waveCtx.lineTo(slitX + 5, arrowY + 5);
+		waveCtx.moveTo(screenX - 5, arrowY - 5); waveCtx.lineTo(screenX, arrowY); waveCtx.lineTo(screenX - 5, arrowY + 5);
+		waveCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+		waveCtx.lineWidth = 1.5;
+		waveCtx.stroke();
+		waveCtx.font = '14px "Noto Sans JP", sans-serif';
+		waveCtx.fillStyle = 'white';
+		waveCtx.textAlign = 'center';
+		waveCtx.fillText(`L = ${params.L.toFixed(1)} m (模式図)`, (slitX + screenX) / 2, arrowY - 10);
+	    }
+
+	    function drawInterferenceGraph() {
+		const graphWidth = interferenceCanvas.width;
+		const graphHeight = interferenceCanvas.height;
+		interferenceCtx.clearRect(0, 0, graphWidth, graphHeight);
+
+		interferenceCtx.beginPath();
+		for (let i = 0; i <= 10; i++) {
+		    const y = (i / 10) * graphHeight;
+		    interferenceCtx.moveTo(0, y);
+		    interferenceCtx.lineTo(graphWidth, y);
+		}
+		for (let i = 0; i <= 20; i++) {
+		    const x = (i / 20) * graphWidth;
+		    interferenceCtx.moveTo(x, 0);
+		    interferenceCtx.lineTo(x, graphHeight);
+		}
+		interferenceCtx.strokeStyle = '#e0e0e0';
+		interferenceCtx.lineWidth = 0.5;
+		interferenceCtx.stroke();
+
+		const waveWidth = waveCanvas.width;
+		const waveHeight = waveCanvas.height;
+		
+		const slitYCenter = waveHeight / 2;
+		const slitX = waveWidth * 0.1;
+		const slitSeparationPx = params.d * scale.pxPerMM;
+		const s1 = { x: slitX, y: slitYCenter - slitSeparationPx / 2 };
+		const s2 = { x: slitX, y: slitYCenter + slitSeparationPx / 2 };
+        
+		const base_lambda_px = 15;
+		const visual_lambda_px = base_lambda_px * (params.lambda / 400.0);
+		const color = wavelengthToRgb(params.lambda);
+
+		interferenceCtx.beginPath();
+		interferenceCtx.moveTo(0, graphHeight);
+
+		for (let i = 0; i < graphWidth; i++) {
+		    const rangeMultiplier = 2.5;
+		    const y_center = waveHeight / 2;
+		    const totalRange = waveHeight * rangeMultiplier;
+		    const y_px = y_center - (totalRange / 2) + (i / graphWidth) * totalRange;
+            
+		    const dx1 = screenX - s1.x, dy1 = y_px - s1.y;
+		    const dx2 = screenX - s2.x, dy2 = y_px - s2.y;
+		    const r1_px = Math.sqrt(dx1*dx1 + dy1*dy1);
+		    const r2_px = Math.sqrt(dx2*dx2 + dy2*dy2);
+		    const pathDiff_px = Math.abs(r1_px - r2_px);
+		    const phaseDiff_visual = (2 * Math.PI * pathDiff_px) / visual_lambda_px;
+		    const interferenceEffect = Math.pow(Math.cos(phaseDiff_visual / 2), 2);
+
+		    const slitWidthPx = (params.d * scale.pxPerMM) * 0.2;
+		    const theta = Math.atan2(y_px - waveHeight / 2, screenX - slitX);
+		    const beta = (Math.PI * slitWidthPx * Math.sin(theta)) / visual_lambda_px;
+            
+		    let diffractionEffect = 1.0;
+		    if (Math.abs(beta) > 1e-6) {
+			diffractionEffect = Math.pow(Math.sin(beta) / beta, 2);
+		    }
+            
+		    const intensity = interferenceEffect * diffractionEffect;
+		    
+		    const y_graph = (1 - intensity) * graphHeight * 0.9 + graphHeight * 0.05;
+		    interferenceCtx.lineTo(i, y_graph);
+		}
+        
+		interferenceCtx.strokeStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
+		interferenceCtx.lineWidth = 3;
+		interferenceCtx.stroke();
+		
+		interferenceCtx.fillStyle = '#333';
+		interferenceCtx.font = '12px sans-serif';
+		interferenceCtx.textAlign = 'center';
+        
+		const screenPhysicalHeightMM = 40; 
+		for (let mm = -20; mm <= 20; mm += 10) {
+		    const pixelX = (mm + screenPhysicalHeightMM / 2) / screenPhysicalHeightMM * graphWidth;
+		    
+		    interferenceCtx.beginPath();
+		    interferenceCtx.moveTo(pixelX, graphHeight * 0.95);
+		    interferenceCtx.lineTo(pixelX, graphHeight);
+		    interferenceCtx.strokeStyle = '#ccc';
+		    interferenceCtx.lineWidth = 1;
+		    interferenceCtx.stroke();
+		    interferenceCtx.fillText(mm.toString(), pixelX, graphHeight - 15);
+		}
+		interferenceCtx.textAlign = 'right';
+		interferenceCtx.fillText("(mm)", graphWidth - 5, graphHeight - 5);
+	    }            
+
+	    function drawPathDifference(targetX, targetY) {
+		const slitYCenter = waveCanvas.height / 2;
+		const slitX = waveCanvas.width * 0.1;
+		const slitSeparationPx = params.d * scale.pxPerMM;
+		const s1 = { x: slitX, y: slitYCenter - slitSeparationPx / 2 };
+		const s2 = { x: slitX, y: slitYCenter + slitSeparationPx / 2 };
+		waveCtx.beginPath();
+		waveCtx.arc(targetX, targetY, 5, 0, 2 * Math.PI);
+		waveCtx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+		waveCtx.fill();
+		waveCtx.beginPath();
+		waveCtx.moveTo(s1.x, s1.y); waveCtx.lineTo(targetX, targetY);
+		waveCtx.moveTo(s2.x, s2.y); waveCtx.lineTo(targetX, targetY);
+		waveCtx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+		waveCtx.lineWidth = 1.5;
+		waveCtx.stroke();
+		const dx1 = targetX - s1.x, dy1 = targetY - s1.y;
+		const dx2 = targetX - s2.x, dy2 = targetY - s2.y;
+		const r1_px = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+		const r2_px = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+		const base_lambda_px = 15;
+		const visual_lambda_px = base_lambda_px * (params.lambda / 400.0);
+		const pathDiff_px = Math.abs(r1_px - r2_px);
+		const pathDiffInWavelengths = pathDiff_px / visual_lambda_px;
+		
+        // ▼▼▼ ここから修正 ▼▼▼
+        // スクリーン描画と同じロジックで光の強度を計算
+        const phaseDiff_visual = (2 * Math.PI * pathDiff_px) / visual_lambda_px;
+        const intensity = Math.pow(Math.cos(phaseDiff_visual / 2), 2);
+
+		let conditionText = '';
+        // 強度に基づいて「強め合い」「弱め合い」を判定し、表示と体感を一致させる
+		if (intensity > 0.8) {
+		    conditionText = `強め合い (明るい縞)`;
+		} else if (intensity < 0.2) {
+		    conditionText = `弱め合い (暗い縞)`;
+		}
+        // ▲▲▲ ここまで修正 ▲▲▲
+
+		waveCtx.font = 'bold 14px "Noto Sans JP", sans-serif';
+		waveCtx.fillStyle = 'white';
+		waveCtx.shadowColor = 'black'; waveCtx.shadowBlur = 4;
+		const text1 = `経路差: 波長の${pathDiffInWavelengths.toFixed(2)}倍`;
+		waveCtx.fillText(text1, targetX + 15, targetY - 10);
+		if (conditionText) {
+		    waveCtx.fillStyle = (conditionText.includes('強め')) ? '#86E3CE' : '#FFC0CB';
+		    waveCtx.fillText(conditionText, targetX + 15, targetY + 10);
+		}
+		waveCtx.shadowBlur = 0;
+	    }
+
+	    function wavelengthToRgb(wavelength) {
+		let r, g, b;
+		if (wavelength >= 380 && wavelength <= 440) { r = -(wavelength - 440) / (440 - 380); g = 0.0; b = 1.0; } 
+		else if (wavelength > 440 && wavelength <= 490) { r = 0.0; g = (wavelength - 440) / (490 - 440); b = 1.0; } 
+		else if (wavelength > 490 && wavelength <= 510) { r = 0.0; g = 1.0; b = -(wavelength - 510) / (510 - 490); } 
+		else if (wavelength > 510 && wavelength <= 580) { r = (wavelength - 510) / (580 - 510); g = 1.0; b = 0.0; } 
+		else if (wavelength > 580 && wavelength <= 645) { r = 1.0; g = -(wavelength - 645) / (645 - 580); b = 0.0; } 
+		else if (wavelength > 645 && wavelength <= 780) { r = 1.0; g = 0.0; b = 0.0; } 
+		else { r = 0.0; g = 0.0; b = 0.0; }
+		let factor = 1.0;
+		if (wavelength > 700) { factor = 0.3 + 0.7 * (780 - wavelength) / (780 - 700); } 
+		else if (wavelength < 420) { factor = 0.3 + 0.7 * (wavelength - 380) / (420 - 380); } 
+		else { factor = 1.0; }
+		return { r: Math.round(255 * (r * factor)), g: Math.round(255 * (g * factor)), b: Math.round(255 * (b * factor)) };
+	    }
+            setup();
+        };
+
+        // --- すべてのシミュレーションを初期化 ---
+        setupReflectionAndRefraction();
+        setupLensSimulations();
+        setupYoungsExperiment();
+    });
+    </script>
+</body>
+</html>
