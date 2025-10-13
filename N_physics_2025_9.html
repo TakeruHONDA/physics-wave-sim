@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025年ノーベル物理学賞解説：超伝導回路における量子の振る舞い</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+            color: #292524; /* stone-800 */
+        }
+       .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+       .nav-link:hover,.nav-link.active {
+            color: #0c4a6e; /* sky-800 */
+            border-bottom-color: #0c4a6e; /* sky-800 */
+        }
+       .tab-btn {
+            transition: all 0.3s;
+        }
+       .tab-btn.active {
+            background-color: #075985; /* sky-700 */
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+       .content-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+       .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+       .formula {
+            font-family: 'Times New Roman', serif;
+            background-color: #e7e5e4; /* stone-200 */
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            text-align: center;
+            font-size: 1.125rem;
+            color: #1c1917; /* stone-900 */
+            overflow-x: auto;
+        }
+       .chart-container {
+            position: relative;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+        }
+       .simulation-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            background-color: #f5f5f4;
+            border-radius: 0.5rem;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d6d3d1; /* stone-300 */
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #075985; /* sky-700 */
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #075985; /* sky-700 */
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-stone-100 text-stone-800">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-sky-800">巨視的量子効果</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium">概要</a>
+                        <a href="#principles" class="nav-link px-3 py-2 rounded-md text-sm font-medium">基礎理論</a>
+                        <a href="#technology" class="nav-link px-3 py-2 rounded-md text-sm font-medium">核心技術</a>
+                        <a href="#another-perspective" class="nav-link px-3 py-2 rounded-md text-sm font-medium">別の視点</a>
+                        <a href="#research" class="nav-link px-3 py-2 rounded-md text-sm font-medium">受賞研究</a>
+                        <a href="#future" class="nav-link px-3 py-2 rounded-md text-sm font-medium">将来性</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="overview" class="text-center mb-16 md:mb-24 scroll-mt-20">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-sky-900 mb-4">2025年ノーベル物理学賞 解説</h1>
+            <p class="text-xl md:text-2xl text-stone-600 mb-8 max-w-4xl mx-auto">電気回路における巨視的量子力学的トンネル効果とエネルギー量子化の発見</p>
+            <div class="content-card p-6 md:p-8 max-w-5xl mx-auto text-left">
+                <p class="text-lg leading-relaxed">
+                    2025年のノーベル物理学賞は、ジョン・クラーク氏、ミシェル・H・デヴォレ氏、ジョン・M・マルティニス氏に、「電気回路における巨視的な量子力学的トンネル効果とエネルギーの量子化の発見」という功績で授与されました。彼らの研究は、単に物理学の基本法則を新たな領域で確認しただけでなく、量子コンピュータの基本素子である「超伝導量子ビット」の誕生に直結し、情報技術の未来を根底から変える可能性を切り拓きました。このページでは、その根幹をなす物理原理から、対話的なシミュレーションを通じて、この偉大な業績の本質に迫ります。
+                </p>
+            </div>
+        </section>
+
+        <section id="principles" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-sky-900">基礎理論の探求</h2>
+            <p class="text-center text-stone-600 mb-8">受賞研究を理解するための4つの柱</p>
+
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+                <div class="flex flex-wrap justify-center border-b border-stone-200 mb-4" id="tabs-buttons">
+                    <button data-tab="superconductivity" class="tab-btn active text-sm sm:text-base font-medium py-2 px-4 rounded-t-lg">超伝導</button>
+                    <button data-tab="cooper" class="tab-btn text-sm sm:text-base font-medium py-2 px-4 rounded-t-lg">クーパー対</button>
+                    <button data-tab="tunnel" class="tab-btn text-sm sm:text-base font-medium py-2 px-4 rounded-t-lg">トンネル効果</button>
+                    <button data-tab="quantization" class="tab-btn text-sm sm:text-base font-medium py-2 px-4 rounded-t-lg">エネルギー量子化</button>
+                </div>
+                <div id="tabs-content">
+                    <div id="superconductivity" class="tab-content p-4">
+                        <h3 class="text-2xl font-bold mb-3 text-sky-800">超伝導とは？</h3>
+                        <p class="mb-4">特定の物質を極低温まで冷却すると、電気抵抗が完全にゼロになる現象です。 これにより、エネルギー損失なしに電流を永久に流し続けることができます。もう一つの重要な特性は、外部の磁場を完全に排除する「マイスナー効果」です。 この超伝導状態は、受賞研究の舞台となりました。</p>
+                        <div class="flex flex-col md:flex-row items-center gap-6">
+                            <div class="w-full md:w-1/2 flex justify-center items-center p-4 bg-stone-100 rounded-lg h-48">
+                                <div class="text-center">
+                                    <div class="text-5xl mb-2">🧊</div>
+                                    <div class="font-bold">極低温</div>
+                                    <div class="text-2xl font-bold text-sky-600">→</div>
+                                    <div class="font-bold">抵抗 R = 0</div>
+                                </div>
+                            </div>
+                            <div class="w-full md:w-1/2 flex justify-center items-center p-4 bg-stone-100 rounded-lg h-48">
+                                <div class="text-center">
+                                    <div class="text-5xl mb-2">🧲</div>
+                                    <div class="font-bold">外部磁場</div>
+                                    <div class="text-2xl font-bold text-red-600">→</div>
+                                    <div class="font-bold">完全反磁性（マイスナー効果）</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="cooper" class="tab-content p-4 hidden">
+                        <h3 class="text-2xl font-bold mb-3 text-sky-800">クーパー対 (Cooper Pair)</h3>
+                        <p class="mb-4">超伝導の謎を解いた鍵がクーパー対です。 通常、電子は互いに反発しますが、超伝導体の中では、結晶格子との相互作用（フォノンを介した引力）によって2つの電子がペアを組みます。 このペアは合計スピンがゼロとなり「ボース粒子」として振る舞い、物質全体で一つの巨大な量子状態（ボース＝アインシュタイン凝縮）を形成します。 この「巨視的量子状態」こそ、受賞者たちが操作し、観測した対象です。</p>
+                        <p class="font-bold text-stone-700">BCS理論によるギャップエネルギーと臨界温度の関係:</p>
+                        <div class="formula">2Δ(0) ≈ 3.53 k<sub>B</sub>T<sub>c</sub></div>
+                        <p class="text-sm text-center text-stone-500">Δ(0): 絶対零度でのエネルギーギャップ, k<sub>B</sub>: ボルツマン定数, T<sub>c</sub>: 臨界温度</p>
+                        <div class="chart-container">
+                            <canvas id="gapChart"></canvas>
+                        </div>
+                         <p class="text-sm text-center text-stone-500 mt-2">超伝導転移温度 (T<sub>c</sub>) 以下に冷却すると、電子のエネルギー状態に「ギャップ (Δ)」が生じ、クーパー対が安定して存在できるようになります。</p>
+                    </div>
+                    <div id="tunnel" class="tab-content p-4 hidden">
+                         <h3 class="text-2xl font-bold mb-3 text-sky-800">トンネル効果シミュレーション</h3>
+                        <p class="mb-4">量子力学の根幹をなす「波動性と粒子性の二重性」により、粒子は波として振る舞い、エネルギー的に越えられないはずの「壁」（ポテンシャル障壁）を確率的に通り抜けます。 これは、クラーク、デヴォレ、マルティニス氏が巨視的な電気回路で実証した核心的な現象です。下のスライダーを動かし、粒子のエネルギーや壁の幅が透過確率にどう影響するか確かめてみましょう。</p>
+                        <div class="grid md:grid-cols-5 gap-6 items-center">
+                            <div class="md:col-span-3">
+                                <div class="simulation-container">
+                                    <canvas id="tunnelChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 space-y-4">
+                                <div>
+                                    <label for="particleEnergy" class="block text-sm font-medium text-stone-700">粒子のエネルギー (E): <span id="energyValue" class="font-bold text-sky-700">60</span> / 100</label>
+                                    <input type="range" id="particleEnergy" min="10" max="100" value="60" class="mt-1">
+                                </div>
+                                <div>
+                                    <label for="barrierWidth" class="block text-sm font-medium text-stone-700">壁の幅 (d): <span id="widthValue" class="font-bold text-sky-700">10</span></label>
+                                    <input type="range" id="barrierWidth" min="5" max="25" value="10" class="mt-1">
+                                </div>
+                                <div class="p-3 bg-stone-100 rounded-lg text-center">
+                                    <p class="text-sm text-stone-600">透過確率 (T)</p>
+                                    <p id="transmissionProb" class="text-2xl font-bold text-sky-800">0.00%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="font-bold text-stone-700 mt-4">簡易的な透過確率の式 (障壁が高く厚い場合):</p>
+                        <div class="formula text-base">T ≈ A * exp(-2γd)  (ここで γ = sqrt(2m(V₀-E))/ħ )</div>
+                        <p class="text-sm text-center text-stone-500">透過確率は壁の幅(d)が厚くなるほど、また壁の高さ(V₀)と粒子エネルギー(E)の差が大きいほど、指数関数的に減少します。</p>
+                    </div>
+                    <div id="quantization" class="tab-content p-4 hidden">
+                        <h3 class="text-2xl font-bold mb-3 text-sky-800">エネルギー量子化シミュレーション</h3>
+                        <p class="mb-4">量子的な粒子を狭い領域（ポテンシャル井戸）に閉じ込めると、その粒子が波として安定に存在できる条件（境界で波が消えるなど）から、取れるエネルギーはとびとびの特定の値（エネルギー準位）に制限されます。 受賞者たちは、この離散的なエネルギー準位が、原子だけでなく人工的に作られた回路にも存在することを初めて示しました。井戸の幅を狭くすると、エネルギー準位の間隔が広がる様子を観察してみましょう。</p>
+                        <div class="grid md:grid-cols-5 gap-6 items-center">
+                            <div class="md:col-span-3">
+                                <div class="simulation-container">
+                                    <canvas id="quantizationChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 space-y-4">
+                                <div>
+                                    <label for="wellWidth" class="block text-sm font-medium text-stone-700">ポテンシャル井戸の幅 (a): <span id="wellWidthValue" class="font-bold text-sky-700">50</span></label>
+                                    <input type="range" id="wellWidth" min="20" max="100" value="50" class="mt-1">
+                                </div>
+                                <div class="p-3 bg-stone-100 rounded-lg">
+                                    <p class="text-sm font-medium text-stone-700">エネルギー準位:</p>
+                                    <ul class="text-left mt-1 text-sm space-y-1">
+                                        <li><span class="font-mono text-sky-600">E₁:</span> <span id="e1_val"></span></li>
+                                        <li><span class="font-mono text-sky-600">E₂:</span> <span id="e2_val"></span></li>
+                                        <li><span class="font-mono text-sky-600">E₃:</span> <span id="e3_val"></span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="font-bold text-stone-700 mt-4">無限ポテンシャル井戸のエネルギー準位:</p>
+                        <div class="formula text-base">E<sub>n</sub> = (n²h²) / (8ma²)  (n = 1, 2, 3, ...)</div>
+                        <p class="text-sm text-center text-stone-500">エネルギー準位は量子数nの2乗に比例し、井戸の幅aの2乗に反比例します。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="technology" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-sky-900">核心技術：ジョセフソン接合</h2>
+            <p class="text-center text-stone-600 mb-8">受賞者たちが実験に用いた「人工原子」</p>
+            <div class="content-card p-6 md:p-8">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-3 text-sky-800">巨視的量子現象の舞台</h3>
+                        <p class="mb-4">ジョセフソン接合は、2つの超伝導体を非常に薄い絶縁体の層で隔てた構造です。 この絶縁体層がトンネル効果の「壁」となり、クーパー対が壁を通り抜けることで「ジョセフソン効果」が起こります。 受賞者たちは、この素子を含む電気回路を極低温に冷却し、その巨視的な電気的特性（位相差φ）が、あたかも一つの量子粒子のように振る舞うことを実証しました。 この接合は、量子ビットの非線形性を生み出すためにも不可欠です。</p>
+                        <p class="font-bold text-stone-700">ジョセフソン効果の基本式：</p>
+                        <div class="formula text-base">直流効果: I = I<sub>c</sub> sin(φ)</div>
+                        <div class="formula text-base">交流効果: dφ/dt = (2e/ħ)V</div>
+                    </div>
+                    <div class="flex justify-center items-center">
+                         <div class="w-full max-w-sm p-4 border-2 border-stone-200 rounded-lg bg-white">
+                            <div class="text-center font-bold mb-2 text-stone-700">ジョセフソン接合の構造</div>
+                            <div class="bg-sky-200 p-4 rounded-t-md text-center text-sky-800 font-semibold">超伝導体 1</div>
+                            <div class="bg-amber-200 p-2 text-center text-amber-800 font-semibold border-y-4 border-dashed border-amber-400">絶縁体障壁<br><span class="text-sm">(数ナノメートル)</span></div>
+                            <div class="bg-sky-200 p-4 rounded-b-md text-center text-sky-800 font-semibold">超伝導体 2</div>
+                            <div class="text-center mt-4 font-bold text-2xl text-stone-600">↔️ クーパー対のトンネリング</div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="another-perspective" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-sky-900">受賞研究を別の視点から理解する</h2>
+            <p class="text-center text-stone-600 mb-8">シミュレーションで見る量子トンネルと熱活性化</p>
+            <div class="content-card p-6 md:p-8">
+                <h3 class="text-2xl font-bold mb-3 text-sky-800">量子ビットからの脱出：量子か、古典か</h3>
+                <p class="mb-4">超伝導量子ビットは、ジョセフソン接合が作る「ポテンシャルの井戸」に量子状態を閉じ込めたものです。外部からバイアス電流をかけてポテンシャルを傾けると、量子状態が隣の井戸へすり抜けることがあります。この脱出には2つのメカニズムがあります。</p>
+                <ul class="list-disc list-inside space-y-2 mb-4">
+                    <li><strong>量子トンネル (MQT):</strong> 熱エネルギーがなくても、量子状態が波として振る舞い、エネルギー障壁を「すり抜け」ます。極低温で支配的な現象です。</li>
+                    <li><strong>熱活性化 (TA):</strong> 熱エネルギーによる揺らぎで、量子状態がエネルギー障壁を古典的に「乗り越え」ます。温度が高いほど起こりやすくなります。</li>
+                </ul>
+                <p class="mb-4">受賞研究の核心は、極低温で熱活性化が抑制されても、この「量子トンネル」による脱出が一定確率で起こることを実験で示した点にあります。下のシミュレーションで、その様子を体験してみましょう。</p>
+
+                <div class="grid md:grid-cols-5 gap-6 items-center">
+                    <div class="md:col-span-3">
+                        <div class="simulation-container">
+                            <canvas id="qubitSimulationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 space-y-4">
+                        <div>
+                            <label for="biasSlider" class="block text-sm font-medium text-stone-700">外部バイアス: <span id="biasValue" class="font-bold text-sky-700">0</span></label>
+                            <input type="range" id="biasSlider" min="0" max="100" value="0" class="mt-1">
+                        </div>
+                        <div>
+                            <label for="thermalSlider" class="block text-sm font-medium text-stone-700">熱の影響 (温度): <span id="thermalValue" class="font-bold text-sky-700">0</span></label>
+                            <input type="range" id="thermalSlider" min="0" max="100" value="0" class="mt-1">
+                        </div>
+                        <div class="p-3 bg-stone-100 rounded-lg text-center">
+                            <p class="text-sm text-stone-600">量子ビットの状態</p>
+                            <p id="qubitState" class="text-2xl font-bold text-green-700">補足状態</p>
+                        </div>
+                        <div class="p-3 bg-stone-100 rounded-lg">
+                            <p class="text-sm font-medium text-stone-700">エネルギー準位:</p>
+                            <ul class="text-left mt-1 text-sm space-y-1">
+                                <li><span class="font-mono text-sky-600">|0⟩ (E₀ 中央):</span> <span id="e0_center_val"></span></li>
+                                <li><span class="font-mono text-sky-400">|1⟩ (E₁ 中央):</span> <span id="e1_center_val"></span></li>
+                                <li><span class="font-mono text-orange-600">E₁ (右):</span> <span id="e1_right_val"></span></li>
+                            </ul>
+                        </div>
+                        <button id="resetButton" class="w-full bg-sky-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-800 transition-colors">リセット</button>
+                    </div>
+                </div>
+
+                <div class="mt-8 border-t pt-6">
+                    <h3 class="text-2xl font-bold mb-4 text-sky-800">シミュレーションの物理解説</h3>
+          
+                    <h4 class="text-xl font-bold mt-6 mb-2 text-stone-800">1. 量子ビットの状態|0⟩と|1⟩とは？</h4>
+                    <p class="text-stone-700 leading-relaxed">
+                        量子コンピュータで使われる「量子ビット」は、このシミュレーションの中央の井戸のように、一つのポテンシャルの中に閉じ込められた量子状態を利用します。
+                    </p>
+                    <ul class="list-disc list-inside space-y-2 text-stone-700 mt-4 pl-2">
+                        <li><strong class="text-sky-600">|0⟩ (ケット・ゼロ):</strong> 粒子が最初にいる中央の井戸の<strong>基底状態</strong>（最もエネルギーが低い安定した状態）です。グラフでは濃い青色の線で示しています。</li>
+                        <li><strong class="text-sky-400">|1⟩ (ケット・ワン):</strong> 同じく中央の井戸の<strong>第一励起状態</strong>（次にエネルギーが低い、少し不安定な状態）です。グラフでは薄い青色の線で示しています。</li>
+                    </ul>
+                    
+                    <h4 class="text-xl font-bold mt-6 mb-2 text-stone-800">2. 脱出プロセスの詳細</h4>
+                    <p class="text-stone-700 leading-relaxed">
+                        このシミュレーションでは、2種類の脱出が起こりえます。
+                    </p>
+                     <ul class="list-disc list-inside space-y-2 text-stone-700 mt-4 pl-2">
+                        <li><strong>共鳴トンネリング:</strong> バイアスを調整して、中央の井戸の|0⟩状態のエネルギー準位（E₀）と、右の井戸の励起状態のエネルギー準位（E₁'）が一致すると「共鳴」が起こります。この時、粒子は同じエネルギーを保ったまま右の井戸へトンネルします。これは熱がなくても起こる純粋な量子現象です。</li>
+                        <li><strong>熱活性化:</strong> 「熱の影響」スライダーを上げると、粒子のエネルギーが熱的に揺らぎます。この揺らぎが偶然ポテンシャルの山を越えるほど大きくなると、粒子は山を「乗り越えて」脱出します。これは古典的なプロセスで、共鳴条件を満たしていなくても確率的に発生します。</li>
+                    </ul>
+                    <p class="mt-4 text-stone-700 leading-relaxed">
+                        脱出後、粒子はどちらのプロセスを経由したとしても、最終的には移動先の井戸で最も安定な「基底状態」へと速やかにエネルギーを放出して落ち着きます。このシミュレーションでは、この最終状態を描画しています。
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+
+        <section id="research" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-sky-900">研究のインパクトと受賞研究</h2>
+            <p class="text-center text-stone-600 mb-8">量子コンピュータへの道と歴史的実験</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 <div class="content-card p-6 md:p-8">
+                    <h3 class="text-2xl font-bold mb-4 text-sky-800">「人工原子」の誕生とコヒーレンス時間の大躍進</h3>
+                    <p class="mb-4">この研究は、電気回路がプランク定数 `ħ` に従う量子力学的な物体として振る舞うことを示しました。これにより、人間がリソグラフィー技術を用いて自由に設計・製造できる「人工原子」としての道が拓かれました。この基礎研究を元に、ノイズの影響を抑え、量子状態を長く保つ（コヒーレンス時間が長い）ための様々な改良がなされました。初期のナノ秒単位から、現在ではミリ秒単位へと、コヒーレンス時間は100万倍も向上し、GoogleやIBMなどが実用的な量子コンピュータを開発する基盤となりました。</p>
+                    <div class="chart-container">
+                        <canvas id="coherenceChart"></canvas>
+                    </div>
+                </div>
+                <div class="content-card p-6 md:p-8">
+                    <h3 class="text-2xl font-bold mb-4 text-sky-800">巨視的量子トンネル効果の観測</h3>
+                    <p class="mb-4">研究チームは、ジョセフソン接合に流す電流を精密に制御し、回路が電圧ゼロの状態から有限の電圧を持つ状態へ「脱出」する確率を測定しました。古典物理学では、温度が絶対零度に近づくと熱エネルギーが枯渇し、熱的な揺らぎによる脱出は起こらなくなるはずです。しかし彼らの実験では、極低温において脱出確率が温度に依存しない一定値に収束することを発見しました。これは、回路全体が量子力学的な「粒子」としてエネルギー障壁をトンネルした決定的な証拠となりました。</p>
+                    <div class="chart-container mt-6">
+                        <canvas id="escapeRateChart"></canvas>
+                    </div>
+                    <p class="text-sm text-center text-stone-500 mt-2">温度と脱出確率の関係。低温で確率が一定値に飽和するのが量子トンネルの証拠です。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="future" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-sky-900">拓かれた未来</h2>
+            <p class="text-center text-stone-600 mb-8">受賞研究がもたらした現代技術へのインパクト</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="content-card p-6">
+                    <div class="text-4xl mb-3">💻</div>
+                    <h3 class="text-xl font-bold mb-2">量子コンピューティング</h3>
+                    <p class="text-stone-600">受賞者たちの発見は、GoogleやIBMなどが開発する超伝導量子コンピュータの基礎です。 特にマルティニス氏は後にGoogleのチームを率いて量子超越性を実証しました。</p>
+                </div>
+                <div class="content-card p-6">
+                    <div class="text-4xl mb-3">📡</div>
+                    <h3 class="text-xl font-bold mb-2">高精度センシング</h3>
+                    <p class="text-stone-600">クラーク氏が開発を主導したSQUID（超伝導量子干渉計）は、脳磁図（MEG）計測や地質探査に利用される世界最高感度の磁気センサーです。</p>
+                </div>
+                <div class="content-card p-6">
+                    <div class="text-4xl mb-3">⚛️</div>
+                    <h3 class="text-xl font-bold mb-2">基礎物理学の探求</h3>
+                    <p class="text-stone-600">彼らの研究は、量子力学を自然の記述から、新たな機能を持つシステムを設計する工学へと変貌させ、「第二次量子革命」の扉を開きました。</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-16 md:mt-24">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-stone-500">
+            <p>&copy; 2025年 ノーベル物理学賞解説レポート. このページは教育目的で作成されたものです。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- 全てのChartインスタンスを格納する変数 ---
+            let gapChartInstance, tunnelChartInstance, quantizationChartInstance, escapeRateChartInstance, qubitChartInstance, coherenceChartInstance;
+            let animationFrameId;
+
+            // --- タブ切り替えロジック ---
+            const tabButtons = document.querySelectorAll('#tabs-buttons .tab-btn');
+            const tabContents = document.querySelectorAll('#tabs-content .tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    tabContents.forEach(content => {
+                        content.classList.toggle('hidden', content.id !== tabId);
+                    });
+
+                    // タブが表示されたときに、対応するチャートを初期化
+                    if (tabId === 'cooper') createGapChart();
+                    if (tabId === 'tunnel') createTunnelChart();
+                    if (tabId === 'quantization') createQuantizationChart();
+                });
+            });
+            
+            // --- エネルギーギャップのチャート (クーパー対タブ) ---
+            function createGapChart() {
+                const ctx = document.getElementById('gapChart');
+                if (!ctx || gapChartInstance) return; 
+                const labels = Array.from({length: 11}, (_, i) => i / 10);
+                const data = labels.map(t_tc => (t_tc < 1) ? 1.74 * Math.sqrt(1 - t_tc) : 0);
+                gapChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'エネルギーギャップ Δ(T)/Δ(0)',
+                            data: data,
+                            borderColor: '#38bdf8',
+                            tension: 0.4,
+                            fill: true,
+                            backgroundColor: 'rgba(56, 189, 248, 0.1)'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            x: { title: { display: true, text: '温度 T / T_c →' } },
+                            y: { title: { display: true, text: 'エネルギーギャップ →' }, min: 0 }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            // --- トンネル効果シミュレーション ---
+            function createTunnelChart() {
+                const canvas = document.getElementById('tunnelChart');
+                if (!canvas || tunnelChartInstance) return;
+                
+                const particleEnergySlider = document.getElementById('particleEnergy');
+                const barrierWidthSlider = document.getElementById('barrierWidth');
+                const energyValueSpan = document.getElementById('energyValue');
+                const widthValueSpan = document.getElementById('widthValue');
+                const probSpan = document.getElementById('transmissionProb');
+
+                const ctx = canvas.getContext('2d');
+                tunnelChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 101}, (_, i) => i),
+                        datasets: [
+                            { label: 'ポテンシャル', data: [], borderColor: '#78716c', borderWidth: 2, pointRadius: 0 },
+                            { label: '粒子エネルギー', data: [], borderColor: '#0ea5e9', borderDash: [5, 5], borderWidth: 2, pointRadius: 0 },
+                            { label: '波動関数(実部)', data: [], borderColor: '#0ea5e9', borderWidth: 1.5, pointRadius: 0, tension: 0.1 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: -1.2, max: 1.2, display: false }, x: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+                });
+
+                function updateTunnelSim() {
+                    const V0 = 100;
+                    const E = parseInt(particleEnergySlider.value);
+                    const d = parseInt(barrierWidthSlider.value);
+                    const barrierStart = 50 - Math.floor(d / 2);
+                    const barrierEnd = 50 + Math.floor(d / 2);
+
+                    energyValueSpan.textContent = E;
+                    widthValueSpan.textContent = d;
+
+                    const potentialData = Array(101).fill(0).map((_, i) => (i >= barrierStart && i <= barrierEnd) ? 1.0 : 0);
+                    const energyData = Array(101).fill(E / V0);
+                    
+                    const k1 = Math.sqrt(E / 100);
+                    const gamma = Math.sqrt((V0 - E) / 100);
+                    const waveData = [];
+                    let transmissionProb = 0;
+
+                    if (E < V0 && gamma > 0) { 
+                        const sinh_gamma_d = Math.sinh(gamma * d * 0.1); 
+                        if (sinh_gamma_d !== 0) {
+                            const T_numerator = 4 * k1 * k1 * gamma * gamma;
+                            const T_denominator = Math.pow(k1*k1 + gamma*gamma, 2) * sinh_gamma_d * sinh_gamma_d + T_numerator;
+                            transmissionProb = T_denominator > 0 ? T_numerator / T_denominator : 0;
+                        }
+                        
+                        const transmittedAmplitude = Math.sqrt(transmissionProb);
+                        for(let i=0; i<=100; i++) {
+                            if (i < barrierStart) {
+                                waveData.push(Math.cos(k1 * (i - barrierStart) * 0.5));
+                            } else if (i <= barrierEnd) {
+                                waveData.push(Math.cos(k1 * (barrierStart-barrierStart)*0.5) * Math.exp(-gamma * (i - barrierStart)*0.2));
+                            } else {
+                                waveData.push(transmittedAmplitude * Math.cos(k1 * (i - barrierEnd) * 0.5));
+                            }
+                        }
+
+                    } else { 
+                        transmissionProb = 1.0;
+                        for(let i=0; i<=100; i++) {
+                             waveData.push(Math.cos(k1 * (i-50)*0.5));
+                        }
+                    }
+                    
+                    probSpan.textContent = (transmissionProb * 100).toFixed(2) + '%';
+                    
+                    tunnelChartInstance.data.datasets[0].data = potentialData;
+                    tunnelChartInstance.data.datasets[1].data = energyData;
+                    tunnelChartInstance.data.datasets[2].data = waveData.map(y => y * 0.8 * (E/V0) );
+                    tunnelChartInstance.update('none');
+                }
+                particleEnergySlider.addEventListener('input', updateTunnelSim);
+                barrierWidthSlider.addEventListener('input', updateTunnelSim);
+                updateTunnelSim();
+            }
+
+            // --- エネルギー量子化シミュレーション ---
+            function createQuantizationChart() {
+                const canvas = document.getElementById('quantizationChart');
+                if (!canvas || quantizationChartInstance) return;
+
+                const wellWidthSlider = document.getElementById('wellWidth');
+                const widthValueSpan = document.getElementById('wellWidthValue');
+                const e1_span = document.getElementById('e1_val');
+                const e2_span = document.getElementById('e2_val');
+                const e3_span = document.getElementById('e3_val');
+
+                const ctx = canvas.getContext('2d');
+                quantizationChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 101}, (_, i) => i),
+                        datasets: [
+                            { label: 'ポテンシャル', data: [], borderColor: '#78716c', borderWidth: 2.5, pointRadius: 0, fill: true, backgroundColor: '#e7e5e4' },
+                            { label: 'E1', data: [], borderColor: '#0ea5e9', borderWidth: 2, pointRadius: 0 },
+                            { label: 'Wave1', data: [], borderColor: '#0ea5e9', borderWidth: 1.5, pointRadius: 0 },
+                            { label: 'E2', data: [], borderColor: '#059669', borderWidth: 2, pointRadius: 0 },
+                            { label: 'Wave2', data: [], borderColor: '#059669', borderWidth: 1.5, pointRadius: 0 },
+                            { label: 'E3', data: [], borderColor: '#ef4444', borderWidth: 2, pointRadius: 0 },
+                            { label: 'Wave3', data: [], borderColor: '#ef4444', borderWidth: 1.5, pointRadius: 0 },
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1.2, display: false }, x: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+                });
+
+                function updateQuantizationSim() {
+                    const a = parseInt(wellWidthSlider.value);
+                    widthValueSpan.textContent = a;
+                    const wellStart = Math.floor((100 - a) / 2);
+                    const wellEnd = Math.ceil((100 + a) / 2);
+
+                    const e_base = 1.0 / (a * a);
+                    const e1 = e_base * 1 * 1 * 10;
+                    const e2 = e_base * 2 * 2 * 10;
+                    const e3 = e_base * 3 * 3 * 10;
+
+                    e1_span.textContent = e1.toFixed(2);
+                    e2_span.textContent = e2.toFixed(2);
+                    e3_span.textContent = e3.toFixed(2);
+
+                    const potentialData = Array(101).fill(0).map((_, i) => (i < wellStart || i > wellEnd) ? 1.1 : 0);
+                    const energyData1 = Array(101).fill(null).map((_, i) => (i >= wellStart && i <= wellEnd) ? e1 : null);
+                    const energyData2 = Array(101).fill(null).map((_, i) => (i >= wellStart && i <= wellEnd) ? e2 : null);
+                    const energyData3 = Array(101).fill(null).map((_, i) => (i >= wellStart && i <= wellEnd) ? e3 : null);
+                    
+                    const waveData1 = Array(101).fill(null).map((_, i) => (i >= wellStart && i <= wellEnd) ? e1 + 0.15 * Math.sin(1 * Math.PI * (i-wellStart)/a) : null);
+                    const waveData2 = Array(101).fill(null).map((_, i) => (i >= wellStart && i <= wellEnd) ? e2 + 0.15 * Math.sin(2 * Math.PI * (i-wellStart)/a) : null);
+                    const waveData3 = Array(101).fill(null).map((_, i) => (i >= wellStart && i <= wellEnd) ? e3 + 0.15 * Math.sin(3 * Math.PI * (i-wellStart)/a) : null);
+
+                    quantizationChartInstance.data.datasets[0].data = potentialData;
+                    quantizationChartInstance.data.datasets[1].data = energyData1;
+                    quantizationChartInstance.data.datasets[2].data = waveData1;
+                    quantizationChartInstance.data.datasets[3].data = energyData2;
+                    quantizationChartInstance.data.datasets[4].data = waveData2;
+                    quantizationChartInstance.data.datasets[5].data = energyData3;
+                    quantizationChartInstance.data.datasets[6].data = waveData3;
+                    quantizationChartInstance.update('none');
+                }
+                wellWidthSlider.addEventListener('input', updateQuantizationSim);
+                updateQuantizationSim();
+            }
+
+            // --- 量子ビットからの脱出シミュレーション ---
+            const qubitCanvas = document.getElementById('qubitSimulationChart');
+            if (qubitCanvas) {
+                const biasSlider = document.getElementById('biasSlider');
+                const thermalSlider = document.getElementById('thermalSlider');
+                const biasValue = document.getElementById('biasValue');
+                const thermalValue = document.getElementById('thermalValue');
+                const qubitState = document.getElementById('qubitState');
+                const e0_center_val_span = document.getElementById('e0_center_val');
+                const e1_center_val_span = document.getElementById('e1_center_val');
+                const e1_right_val_span = document.getElementById('e1_right_val');
+                const resetButton = document.getElementById('resetButton');
+                
+                const resonanceThreshold = 0.05;
+                let state = {
+                    isEscaped: false,
+                    isAnimating: false,
+                    wavePacketPosition: -1,
+                    baseWavePacketEnergy: 0
+                };
+
+                function calculateEnergyLevels(potentialData, tilt, labels) {
+                    function findWellMinimum(approxIndex, searchRadius) {
+                        let minIndex = approxIndex;
+                        const start = Math.max(0, approxIndex - searchRadius);
+                        const end = Math.min(potentialData.length, approxIndex + searchRadius);
+                        for (let i = start; i < end; i++) {
+                            if (potentialData[i] < potentialData[minIndex]) minIndex = i;
+                        }
+                        return minIndex;
+                    }
+                    
+                    const well_center_idx = findWellMinimum(labels.indexOf(0), 30);
+                    const well_right_idx = findWellMinimum(labels.indexOf(2.5), 30);
+                    
+                    if (state.wavePacketPosition === -1) {
+                         state.wavePacketPosition = well_center_idx;
+                    }
+
+                    const well_center_minY = potentialData[well_center_idx];
+                    const well_right_minY = potentialData[well_right_idx];
+                    
+                    const levelSpacing = 1.0 - 0.5 * tilt * tilt;
+                    const e0_center = well_center_minY + 0.5 * levelSpacing;
+                    const e1_center = well_center_minY + 1.5 * levelSpacing;
+                    const e1_right = well_right_minY + 1.5 * levelSpacing;
+                    
+                    return { well_center_idx, well_right_idx, e0_center, e1_center, e1_right, well_center_minY, well_right_minY, levelSpacing };
+                }
+
+                function updateStaticChart() {
+                    if (state.isAnimating || state.isEscaped) return;
+                    
+                    const bias = parseInt(biasSlider.value);
+                    const labels = qubitChartInstance.data.labels;
+                    const tilt = bias / 100.0;
+                    const potentialWell = labels.map(x => 2 * (1 - Math.cos(2.5 * x)) - 3 * tilt * x);
+                    const levels = calculateEnergyLevels(potentialWell, tilt, labels);
+                    
+                    biasValue.textContent = bias;
+                    e0_center_val_span.textContent = levels.e0_center.toFixed(2);
+                    e1_center_val_span.textContent = levels.e1_center.toFixed(2);
+                    e1_right_val_span.textContent = levels.e1_right.toFixed(2);
+                    state.baseWavePacketEnergy = levels.e0_center;
+
+                    const energyLevel0_center = Array(labels.length).fill(null);
+                    const energyLevel1_center = Array(labels.length).fill(null);
+                    const energyLevel1_right = Array(labels.length).fill(null);
+                    
+                    for(let i = levels.well_center_idx - 20; i <= levels.well_center_idx + 20; i++) if(i>=0 && i < labels.length) {
+                        energyLevel0_center[i] = levels.e0_center;
+                        energyLevel1_center[i] = levels.e1_center;
+                    }
+                    if(levels.well_right_idx !== -1) {
+                      for(let i = levels.well_right_idx - 20; i <= levels.well_right_idx + 20; i++) if(i>=0 && i < labels.length) energyLevel1_right[i] = levels.e1_right;
+                    }
+
+                    qubitChartInstance.data.datasets[0].data = potentialWell;
+                    qubitChartInstance.data.datasets[1].data = energyLevel0_center;
+                    qubitChartInstance.data.datasets[2].data = energyLevel1_center;
+                    qubitChartInstance.data.datasets[3].data = energyLevel1_right;
+                    
+                    const inResonance = Math.abs(levels.e0_center - levels.e1_right) < resonanceThreshold;
+                    const ds1 = qubitChartInstance.data.datasets[1];
+                    const ds3 = qubitChartInstance.data.datasets[3];
+                    const thermal = parseInt(thermalSlider.value);
+
+                    if (inResonance) {
+                        ds1.borderWidth = 3.5; ds1.borderDash = [];
+                        ds3.borderWidth = 3.5; ds3.borderDash = [];
+                        if (!state.isEscaped && !state.isAnimating) {
+                            qubitState.textContent = "共鳴状態！";
+                            qubitState.className = 'text-2xl font-bold text-purple-700';
+                            if (thermal < 5) { // Low temp -> quantum tunneling is dominant
+                                startAnimation('tunnel', levels);
+                            }
+                        }
+                    } else if (!state.isEscaped) {
+                        ds1.borderWidth = 2; ds1.borderDash = [5, 5];
+                        ds3.borderWidth = 2; ds3.borderDash = [5, 5];
+                        qubitState.textContent = "補足状態";
+                        qubitState.className = 'text-2xl font-bold text-green-700';
+                    }
+                     qubitChartInstance.update('none');
+                }
+
+                function startAnimation(type, levels) {
+                    if (state.isAnimating || state.isEscaped) return;
+                    state.isAnimating = true;
+                    biasSlider.disabled = true;
+                    thermalSlider.disabled = true;
+
+                    const targetIdx = levels.well_right_idx;
+                    const finalEnergy = levels.well_right_minY + 0.5 * levels.levelSpacing;
+                    let animationProgress = 0;
+                    const duration = (type === 'tunnel') ? 60 : 40;
+
+                    function animate() {
+                        if (animationProgress > duration) {
+                            state.isEscaped = true;
+                            state.isAnimating = false;
+                            state.wavePacketPosition = targetIdx;
+                            state.baseWavePacketEnergy = finalEnergy;
+                            qubitState.textContent = (type === 'tunnel' ? "量子トンネル完了" : "熱活性化で脱出");
+                            qubitState.className = 'text-2xl font-bold text-red-700';
+                            updateWavePacket();
+                            cancelAnimationFrame(animationFrameId);
+                            return;
+                        }
+
+                        animationProgress++;
+                        const t = animationProgress / duration;
+
+                        if (type === 'tunnel') {
+                            qubitState.textContent = "量子トンネル中...";
+                            state.wavePacketPosition = Math.round(levels.well_center_idx + (targetIdx - levels.well_center_idx) * t);
+                            state.baseWavePacketEnergy = levels.e0_center;
+                        } else {
+                             qubitState.textContent = "熱活性化！";
+                             const barrierPeakY = Math.max(...qubitChartInstance.data.datasets[0].data.slice(levels.well_center_idx, targetIdx)) + 0.2;
+                             const pathY = -4 * (barrierPeakY - state.baseWavePacketEnergy) * t * (t - 1) + state.baseWavePacketEnergy;
+                             state.wavePacketPosition = Math.round(levels.well_center_idx + (targetIdx - levels.well_center_idx) * t);
+                             state.baseWavePacketEnergy = pathY;
+                        }
+                        
+                        updateWavePacket();
+                        animationFrameId = requestAnimationFrame(animate);
+                    }
+                    animate();
+                }
+
+                function updateWavePacket() {
+                    const newWavePacket = Array(qubitChartInstance.data.labels.length).fill(null);
+                    const thermal = parseInt(thermalSlider.value);
+                    const thermalJitter = state.isEscaped ? 0 : (thermal / 100) * 8.0 * (Math.random() - 0.5);
+
+                    for(let i = -15; i <= 15; i++){
+                       const pos = state.wavePacketPosition + i;
+                       if(pos >= 0 && pos < newWavePacket.length) {
+                           newWavePacket[pos] = state.baseWavePacketEnergy + thermalJitter;
+                       }
+                    }
+                    qubitChartInstance.data.datasets[4].data = newWavePacket;
+                    qubitChartInstance.update('none');
+                }
+
+                function continuousUpdate() {
+                    if (!state.isAnimating && !state.isEscaped) {
+                        const thermal = parseInt(thermalSlider.value);
+                        const levels = calculateEnergyLevels(qubitChartInstance.data.datasets[0].data, parseInt(biasSlider.value) / 100.0, qubitChartInstance.data.labels);
+                        
+                        if (thermal > 0) {
+                            const barrierHeight = Math.max(...qubitChartInstance.data.datasets[0].data.slice(levels.well_center_idx, levels.well_right_idx));
+                            const thermalJitter = (thermal / 100) * 8.0 * (Math.random() - 0.5);
+                            const currentEnergy = state.baseWavePacketEnergy + thermalJitter;
+                            
+                            if (currentEnergy > barrierHeight && Math.random() < (thermal/100) * 0.1) {
+                                 startAnimation('thermal', levels);
+                            }
+                        }
+                        updateWavePacket();
+                    }
+                    animationFrameId = requestAnimationFrame(continuousUpdate);
+                }
+
+                function resetSimulation() {
+                    cancelAnimationFrame(animationFrameId);
+                    state.isEscaped = false;
+                    state.isAnimating = false;
+                    state.wavePacketPosition = -1;
+                    biasSlider.disabled = false;
+                    thermalSlider.disabled = false;
+                    biasSlider.value = 0;
+                    thermalSlider.value = 0;
+                    thermalValue.textContent = 0;
+                    biasValue.textContent = 0;
+                    updateStaticChart();
+                    // After static parts are reset, immediately redraw the wave packet at its initial state
+                    const initialLevels = calculateEnergyLevels(qubitChartInstance.data.datasets[0].data, 0, qubitChartInstance.data.labels);
+                    state.wavePacketPosition = initialLevels.well_center_idx;
+                    state.baseWavePacketEnergy = initialLevels.e0_center;
+                    updateWavePacket();
+                }
+
+                function createQubitSimulationChart() {
+                    if (qubitChartInstance) return;
+                    const ctx = qubitCanvas.getContext('2d');
+                    const labels = Array.from({length: 301}, (_, i) => (i - 50) / 50);
+                    qubitChartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                { label: 'ポテンシャル', data: [], borderColor: '#9ca3af', borderWidth: 3, pointRadius: 0, tension: 0.1 },
+                                { label: '|0⟩ (E₀ 中央)', data: [], borderColor: '#0ea5e9', borderWidth: 2, pointRadius: 0, borderDash: [5, 5] },
+                                { label: '|1⟩ (E₁ 中央)', data: [], borderColor: '#60a5fa', borderWidth: 2, pointRadius: 0, borderDash: [5, 5] },
+                                { label: 'E₁ (右)', data: [], borderColor: '#f97316', borderWidth: 2, pointRadius: 0, borderDash: [5, 5] },
+                                { label: '量子状態', data: [], backgroundColor: 'rgba(2, 132, 199, 0.6)', borderColor: '#0284c7', borderWidth: 1, pointRadius: 0, fill: true }
+                            ]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            scales: {
+                                y: { display: true, min: -8, max: 8, title: { display: true, text: 'ポテンシャルエネルギー' } },
+                                x: { display: true, type: 'linear', min: -1.0, max: 5.0, title: { display: true, text: '位相差 (φ)' } }
+                            },
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                            animation: false
+                        }
+                    });
+                    resetSimulation();
+                    continuousUpdate();
+                }
+                
+                biasSlider.addEventListener('input', updateStaticChart);
+                thermalSlider.addEventListener('input', () => { thermalValue.textContent = thermalSlider.value; });
+                resetButton.addEventListener('click', resetSimulation);
+                createQubitSimulationChart();
+            }
+
+            // --- コヒーレンス時間チャート ---
+            const ctxCoherence = document.getElementById('coherenceChart');
+            if(ctxCoherence) {
+                new Chart(ctxCoherence, {
+                    type: 'line',
+                    data: {
+                        labels: ['~1999', '~2003', '~2005', '~2011', '~2014', '~2020', '現在'],
+                        datasets: [{
+                            label: 'コヒーレンス時間 (対数スケール)',
+                            data: [1, 100, 1000, 10000, 50000, 500000, 1000000],
+                            fill: false,
+                            borderColor: '#0369a1',
+                            backgroundColor: '#0369a1',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                type: 'logarithmic',
+                                title: { display: true, text: '時間 (ナノ秒)' },
+                                ticks: {
+                                    callback: function(value) {
+                                        if (value === 1) return '1 ns';
+                                        if (value === 1000) return '1 µs';
+                                        if (value === 1000000) return '1 ms';
+                                        return null;
+                                    }
+                                }
+                            },
+                            x: { title: { display: true, text: '年' } }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let value = context.parsed.y;
+                                        if (value < 1000) return `${value} ns`;
+                                        if (value < 1000000) return `${value / 1000} µs`;
+                                        return `${value / 1000000} ms`;
+                                    }
+                                }
+                            },
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            // --- 脱出確率チャート ---
+            function createEscapeRateChart() {
+                const ctx = document.getElementById('escapeRateChart');
+                if (!ctx || escapeRateChartInstance) return;
+                escapeRateChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [0, 20, 40, 60, 80, 100, 120, 140, 160],
+                        datasets: [
+                            {
+                                label: '熱活性化（古典的予測）',
+                                data: [1000, 150, 20, 3, 0.5, 0.1, 0.01, 0, 0],
+                                borderColor: '#a8a29e',
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                tension: 0.4
+                            },
+                            {
+                                label: '実験結果',
+                                data: [1000, 155, 25, 8, 5, 4.5, 4.2, 4.1, 4.0],
+                                borderColor: '#0ea5e9',
+                                backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                                pointBackgroundColor: '#0ea5e9',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            y: { type: 'logarithmic', title: { display: true, text: '脱出確率 Γ (任意単位)' } },
+                            x: { title: { display: true, text: '温度 T (mK)' } }
+                        },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+            createEscapeRateChart();
+
+            // --- スクロールに応じたナビゲーションリンクのアクティブ化 ---
+            const sections = document.querySelectorAll('section');
+            const navLinksObserver = document.querySelectorAll('.nav-link');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinksObserver.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                        });
+                    }
+                });
+            }, { rootMargin: '-50% 0px -50% 0px' });
+            sections.forEach(section => observer.observe(section));
+
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

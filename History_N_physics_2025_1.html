@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量子力学の歴史を探る Ver.8 (物理学検証版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU07EWHeMOSBcBIqnNv5dSvniEB9gaEnG4RDASp2JNYEzOsAXMang6i" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzYCcm2KEiV2Z9SpunSOH8BPsJYfrzsaRxw" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <!-- Chosen Palette: Warm Neutrals with a touch of Slate Blue -->
+    <!-- Application Structure Plan: To address the user's request for physical accuracy, this version adds a new foundational event (Planck's 1900 discovery) and refines the explanation of Einstein's contribution. The structure remains a chronological timeline, which is ideal for showing the logical progression of scientific ideas. The addition of Planck's work provides crucial context, making the subsequent developments easier to understand. -->
+    <!-- Visualization & Content Choices: 
+    1. Report Info: Distinction between Planck's and Einstein's work. Goal: Enhance physical accuracy and clarity. Viz/Presentation: A new timeline event for Planck (1900) has been added, and the text for Einstein (1905) has been carefully reworded to show the progression of the idea of quantization. Interaction: Standard click-to-display. Justification: This addresses the user's core concern directly and corrects a common point of confusion in the history of physics, making the entire timeline more robust and educational. Method: JS data object update.
+    2. Report Info: All other scientific concepts (BCS Theory, Uncertainty Principle, etc.). Goal: Maintain a high level of accuracy and clarity. Viz/Presentation: Existing text, formulas, charts, and diagrams have been reviewed and confirmed for physical correctness. Justification: A full review ensures the entire application is reliable as an educational tool. Method: No changes needed to other visualizations.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .timeline-line {
+            position: absolute;
+            left: 19px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #e5e7eb;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: -11px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #94a3b8;
+            border: 4px solid #f8f9fa;
+            z-index: 10;
+            transition: background-color 0.3s;
+        }
+        .timeline-item.active::before {
+            background-color: #2563eb;
+        }
+        .sticky-nav {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+        .katex-display {
+            padding: 1rem;
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        .formula-explanation {
+            font-size: 0.875rem;
+            color: #475569;
+            margin-top: 0.75rem;
+            padding-left: 1rem;
+            border-left: 3px solid #cbd5e1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-2">量子力学から量子コンピュータへ</h1>
+            <p class="text-lg text-slate-600">アインシュタインの閃きから現代へ続く、発見の歴史を辿る</p>
+        </header>
+
+        <nav id="nav-menu" class="sticky-nav bg-white/80 backdrop-blur-sm border-b border-slate-200 shadow-sm mb-12 rounded-full">
+            <div class="max-w-4xl mx-auto px-4">
+                <div class="flex justify-center items-center space-x-2 md:space-x-4 h-16">
+                     <a href="#era-1" class="nav-link text-sm md:text-base text-slate-600 hover:text-blue-600 font-medium transition-colors duration-300 px-3 py-2 rounded-full">第1部: 黎明期</a>
+                     <a href="#era-2" class="nav-link text-sm md:text-base text-slate-600 hover:text-blue-600 font-medium transition-colors duration-300 px-3 py-2 rounded-full">第2部: 巨視的量子現象</a>
+                     <a href="#era-3" class="nav-link text-sm md:text-base text-slate-600 hover:text-blue-600 font-medium transition-colors duration-300 px-3 py-2 rounded-full">第3部: 2025年ノーベル賞</a>
+                     <a href="#era-4" class="nav-link text-sm md:text-base text-slate-600 hover:text-blue-600 font-medium transition-colors duration-300 px-3 py-2 rounded-full">第4部: 量子コンピュータ</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+            <main class="w-full lg:w-3/5 relative">
+                <div class="timeline-line"></div>
+                <div id="timeline-container" class="space-y-16">
+                </div>
+            </main>
+
+            <aside class="w-full lg:w-2/5 lg:sticky top-24 self-start">
+                <div id="details-panel" class="bg-white p-6 rounded-lg shadow-lg border border-slate-200 min-h-[400px]">
+                    <h2 id="details-title" class="text-2xl font-bold text-slate-800 mb-1">詳細情報</h2>
+                    <p id="details-scientist" class="text-md font-medium text-slate-500 mb-2"></p>
+                    <p id="details-year" class="text-sm text-slate-500 mb-4"></p>
+                    <div id="details-content" class="text-slate-700 leading-relaxed space-y-4">
+                        <p>左のタイムライン上のイベントをクリックすると、ここに詳細が表示されます。</p>
+                    </div>
+                    <div id="details-visualization" class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200"></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        const timelineData = [
+            { 
+                era: 1, 
+                id: 'era-1',
+                eraTitle: '第1部：量子論の黎明期',
+                eraDescription: '古典物理学の常識を覆す、新しい物理学の基礎が築かれた時代。ミクロな世界の不可思議な法則が次々と明らかにされました。',
+                events: [
+                    { year: '1900年', title: '黒体放射と量子仮説', scientist: 'マックス・プランク', content: 'プランクは、高温の物体が放出する光（黒体放射）のエネルギー分布を説明するため、「エネルギーは連続的な値をとるのではなく、特定の単位の整数倍の値しかとれない」という画期的な「量子仮説」を提唱しました。これが量子論の真の幕開けとなります。$$ E = nh\\nu $$ <div class="formula-explanation">エネルギー($E$)は、プランク定数($h$)と振動数($\\nu$)の積の整数($n$)倍の値しかとれないことを示します。</div>' },
+                    { year: '1905年', title: '光量子仮説と光電効果の解明', scientist: 'アルベルト・アインシュタイン', content: 'アインシュタインは、プランクの量子仮説を発展させ、「光そのものがエネルギーの粒（光量子、後の光子）の集まりである」という、より大胆な「光量子仮説」を提唱しました。これにより、金属に光を当てると電子が飛び出す「光電効果」の不可解な振る舞いを完璧に説明しました。',
+                      visualization: { type: 'chart', chartType: 'line', title: '光電効果：振動数とエネルギーの関係', data: { labels: ['0', 'ν₀/2', 'ν₀ (限界振動数)', '1.5ν₀', '2ν₀', '2.5ν₀'], datasets: [{ data: [null, null, 0, 0.5, 1, 1.5], borderColor: '#2563eb', tension: 0.1, fill: false, pointRadius: [0, 0, 5, 5, 5, 5], pointBackgroundColor: '#2563eb' }] }, options: { scales: { x: { title: { display: true, text: '光の振動数 (ν)' } }, y: { title: { display: true, text: '電子の最大運動エネルギー' }, beginAtZero: true } }, plugins: { legend: { display: false } } } } },
+                    { year: '1913年', title: 'ボーアの原子模型', scientist: 'ニールス・ボーア', content: '原子内の電子は特定の量子化されたエネルギー準位（軌道）しか取れないという原子模型を提唱しました。これにより原子スペクトルの謎が説明されました。',
+                      visualization: { type: 'diagram', diagramType: 'bohrModel', title: 'ボーア模型のエネルギー準位' } },
+                    { year: '1924年', title: '物質波の概念', scientist: 'ルイ・ド・ブロイ', content: '電子のような粒子も波としての性質を持つという「物質波」の考え方を提唱し、物質の粒子と波の二重性が示唆されました。$$ \\lambda = \\frac{h}{p} $$ <div class="formula-explanation">粒子の運動量($p$)が大きいほど、その物質波の波長($\\lambda$)は短くなることを示します。($h$はプランク定数)</div>' },
+                    { year: '1926年', title: 'シュレーディンガー方程式', scientist: 'エルヴィン・シュレーディンガー', content: '物質波の状態を記述する基本方程式を発表しました。これにより、量子力学の数学的な体系が確立されました。$$ i\\hbar\\frac{\\partial}{\\partial t}\\Psi(\\mathbf{r},t) = \\hat{H}\\Psi(\\mathbf{r},t) $$ <div class="formula-explanation">波動関数($\\Psi$)の時間変化が、系の全エネルギーを表すハミルトニアン演算子($\\hat{H}$)によって決まることを示す、量子力学の最も基本的な方程式です。</div>' },
+                    { year: '1927年', title: '不確定性原理', scientist: 'ヴェルナー・ハイゼンベルク', content: '粒子の位置と運動量を同時に正確に測定することはできないとする「不確定性原理」を提唱しました。これは量子世界の根源的な性質を示す原理です。$$ \\Delta x \\cdot \\Delta p \\ge \\frac{\\hbar}{2} $$ <div class="formula-explanation">位置の不確かさ($\\Delta x$)と運動量の不確かさ($\\Delta p$)の積は、一定値より小さくなれないことを示します。</div>',
+                      visualization: { type: 'diagram', diagramType: 'uncertainty', title: '不確定性原理の概念図' } }
+                ]
+            },
+            {
+                era: 2,
+                id: 'era-2',
+                eraTitle: '第2部：巨視的量子現象の発見',
+                eraDescription: 'ミクロな世界の法則が、目に見える大きさの「マクロな系」でも現れることが発見された時代。量子と日常の世界を繋ぐ架橋が築かれました。',
+                events: [
+                    { year: '1957年', title: 'BCS理論とクーパー対', scientist: 'バーディーン、クーパー、シュリーファー', content: 'BCS理論は、特定の金属が極低温で電気抵抗を失う「超伝導」現象を、量子力学的に説明した画期的な理論です。<br><br>この理論の核心は、通常は互いに反発する電子が、物質の結晶格子（原子の規則正しい配列）の振動を介して、間接的に引かれ合うという考え方です。一つの電子が通過する際に格子をわずかに歪ませ、その歪みが後続の別の電子を引き寄せることで、「クーパー対」と呼ばれる電子のペアが形成されます。<br><br>このクーパー対は、個々の電子とは全く異なる振る舞いをし、格子とのエネルギー交換（＝抵抗の原因）なしに、物質内を自由に動き回ることができます。$$ E_g = 2\\Delta $$ <div class="formula-explanation">クーパー対を壊して通常の電子状態に戻すには、エネルギーギャップ($E_g$)以上のエネルギーが必要です。このギャップの存在が、超伝導の安定性を保証します。$\\Delta$はギャップパラメータです。</div>',
+                      visualization: { type: 'chart', chartType: 'line', title: '超伝導エネルギーギャップの模式図', data: { labels: ['-3Δ', '-2Δ', '-Δ (Eғ)', '0', '+Δ (Eғ)', '+2Δ', '+3Δ'], datasets: [{ label: '通常金属', data: [1, 1, 1, 1, 1, 1, 1], borderColor: '#94a3b8', borderDash: [5, 5], pointRadius: 0 }, { label: '超伝導体', data: [1, 1.5, null, null, null, 1.5, 1], borderColor: '#2563eb', fill: false, pointRadius: 0 }] }, options: { scales: { x: { title: { display: true, text: 'エネルギー (フェルミ準位 Eғ=0)' } }, y: { title: { display: true, text: '状態密度' }, beginAtZero: true, ticks: { display: false } } }, plugins: { tooltip: { enabled: false } } } } },
+                    { year: '1962年', title: 'ジョセフソン効果の予測', scientist: 'ブライアン・ジョセフソン', content: '2つの超伝導体の間に薄い絶縁体を挟んだ構造（ジョセフソン接合）で、クーパー対が壁をすり抜ける「量子トンネル効果」が起こることを理論的に予測しました。$$ I(t) = I_c \\sin(\\phi(t)) $$ <div class="formula-explanation">接合を流れる電流($I$)が位相差($\\phi$)の正弦に比例することを示します。</div>' },
+                    { year: '1980年', title: '巨視的量子トンネル効果（MQT）の初観測', scientist: 'ジョン・クラークらの研究グループ', content: 'ジョセフソン接合において、本来は超伝導状態に留まるはずの系が、量子トンネル効果によって有限の電圧を持つ状態へ遷移する現象が実験的に初めて観測されました。' },
+                    { year: '1985年', title: 'エネルギー準位の量子化の発見', scientist: 'ジョン・マルティニス、ミシェル・デボレ、ジョン・クラーク', content: 'ジョセフソン接合を巧みに設計することで、その電磁気的なエネルギー状態が、原子のエネルギー準位のように離散的な値しか取らない「エネルギーの量子化」が実験で確認されました。',
+                      visualization: { type: 'diagram', diagramType: 'energyLevels', title: 'エネルギー準位の比較' } }
+                ]
+            },
+            {
+                era: 3,
+                id: 'era-3',
+                eraTitle: '第3部：2025年ノーベル物理学賞',
+                eraDescription: '1980年代の偉大な発見が、現代の量子技術の礎となったことを示す歴史的な受賞。この業績がなければ、今日の量子コンピュータは存在しなかったかもしれません。',
+                events: [
+                    { year: '2025年', title: 'ノーベル物理学賞受賞', scientist: 'ジョン・マルティニス、ミシェル・H・デボレ、ジョン・クラーク', content: '【受賞理由】「電気回路における巨視的量子力学的トンネル効果とエネルギー量子化の発見」に対して。<br><br>【解説】3氏の1980年代の研究成果は、超伝導体で作られた電気回路が、量子力学の法則に従う「人工原子」として振る舞うことを実証しました。この発見は、量子状態を人の手で設計・制御することを可能にし、今日の超伝導量子ビット、ひいては量子コンピュータの実現に向けた扉を開いた根源的な業績として評価されました。' }
+                ]
+            },
+            {
+                era: 4,
+                id: 'era-4',
+                eraTitle: '第4部：量子コンピュータの発展と未来',
+                eraDescription: '量子力学を情報処理に応用する「量子コンピュータ」が、理論から現実のデバイスへと発展していく現代。その驚異的な計算能力が、新たな未来を切り拓きます。',
+                specialContent: `
+                    <div class="my-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <h4 class="font-bold text-center text-slate-700 mb-4">量子ビット数の飛躍的増大</h4>
+                        <div class="chart-container" style="position: relative; height:250px; width:100%; max-width: 600px; margin: auto;">
+                            <canvas id="qubitChart"></canvas>
+                        </div>
+                    </div>
+                `,
+                events: [
+                    { year: '1994年', title: 'ショアのアルゴリズム', scientist: 'ピーター・ショア', content: '量子コンピュータを用いることで、巨大な数の素因数分解を効率的に解くことができるアルゴリズムを発表しました。これは、現代の暗号技術を破る可能性を示し、量子コンピュータ研究を一気に加速させました。' },
+                    { year: '1999年', title: '超伝導量子ビットの誕生', scientist: '中村 泰信、蔡 兆申 ら (当時NEC)', content: '1985年の発見を基に、日本の研究チームが世界で初めて超伝導回路を用いた量子ビットの基本的な操作に成功しました。' },
+                    { year: '2019年', title: '「量子超越性」の実証', scientist: 'Google AI Quantum チーム', content: 'Googleが、当時の最速のスーパーコンピュータでも事実上不可能な計算を、自社開発の量子プロセッサで実行することに成功したと発表し、「量子超越性」を実証したと主張しました。' },
+                    { year: '2025年現在', title: '現在の研究動向', scientist: '世界中の研究機関・企業', content: '計算中に発生するエラーを訂正する「量子誤り訂正」技術の開発が最重要課題となっています。より多くの量子ビットを集積し、それらを高精度に制御する技術開発が世界中で進められています。創薬、新材料開発、金融モデリングなど、特定の問題に特化した量子アルゴリズムの研究と、その実用化に向けた取り組みが活発に行われています。' }
+                ]
+            }
+        ];
+
+        const timelineContainer = document.getElementById('timeline-container');
+        const detailsTitle = document.getElementById('details-title');
+        const detailsScientist = document.getElementById('details-scientist');
+        const detailsYear = document.getElementById('details-year');
+        const detailsContent = document.getElementById('details-content');
+        const detailsVisualization = document.getElementById('details-visualization');
+
+        let activeItem = null;
+        let detailChart = null;
+        
+        function renderVisualization(visData) {
+            detailsVisualization.innerHTML = '';
+            if (!visData) {
+                detailsVisualization.style.display = 'none';
+                return;
+            }
+            detailsVisualization.style.display = 'block';
+
+            const title = document.createElement('h3');
+            title.className = 'text-md font-bold text-slate-700 mb-3 text-center';
+            title.textContent = visData.title;
+            detailsVisualization.appendChild(title);
+
+            if (visData.type === 'chart') {
+                const canvas = document.createElement('canvas');
+                detailsVisualization.appendChild(canvas);
+                if (detailChart) detailChart.destroy();
+                detailChart = new Chart(canvas, {
+                    type: visData.chartType,
+                    data: visData.data,
+                    options: visData.options
+                });
+            } else if (visData.type === 'diagram') {
+                const diagramContainer = document.createElement('div');
+                detailsVisualization.appendChild(diagramContainer);
+                if (visData.diagramType === 'bohrModel') {
+                    diagramContainer.innerHTML = `
+                        <div class="relative h-48 w-48 mx-auto">
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">原子核</div>
+                            <div class="absolute inset-0 border-2 border-slate-300 rounded-full animate-pulse"></div>
+                            <div class="absolute inset-2 border-2 border-slate-300 rounded-full"></div>
+                            <div class="absolute inset-5 border-2 border-slate-300 rounded-full"></div>
+                            <div class="absolute top-1/2 left-1/2" style="margin-left: -54px; margin-top: -10px;">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            </div>
+                            <div class="text-xs text-slate-500 absolute top-1/2 left-1" style="margin-top: -30px">n=3</div>
+                            <div class="text-xs text-slate-500 absolute top-1/2 left-4" style="margin-top: -20px">n=2</div>
+                            <div class="text-xs text-slate-500 absolute top-1/2 left-7" style="margin-top: -10px">n=1</div>
+                        </div>`;
+                } else if (visData.diagramType === 'uncertainty') {
+                     diagramContainer.innerHTML = `
+                        <div class="flex justify-around items-center text-center text-sm">
+                            <div>
+                                <p class="mb-2">位置が正確</p>
+                                <div class="w-4 h-20 bg-blue-300 mx-auto"></div>
+                                <p class="mt-2 text-slate-600">Δx → 小</p>
+                            </div>
+                            <div>
+                                <p class="mb-2">運動量が不確か</p>
+                                <div class="w-16 h-20 bg-red-300 mx-auto"></div>
+                                <p class="mt-2 text-slate-600">Δp → 大</p>
+                            </div>
+                        </div>
+                        <div class="text-center my-2 text-slate-400">⇔</div>
+                        <div class="flex justify-around items-center text-center text-sm">
+                            <div>
+                                <p class="mb-2">位置が不確か</p>
+                                <div class="w-16 h-20 bg-blue-300 mx-auto"></div>
+                                <p class="mt-2 text-slate-600">Δx → 大</p>
+                            </div>
+                            <div>
+                                <p class="mb-2">運動量が正確</p>
+                                <div class="w-4 h-20 bg-red-300 mx-auto"></div>
+                                <p class="mt-2 text-slate-600">Δp → 小</p>
+                            </div>
+                        </div>`;
+                } else if (visData.diagramType === 'energyLevels') {
+                    diagramContainer.innerHTML = `
+                        <div class="flex justify-around text-center">
+                            <div>
+                                <h4 class="font-semibold mb-2">自然原子</h4>
+                                <div class="relative w-24 h-32 bg-white p-2 border">
+                                    <div class="absolute w-full h-0.5 bg-slate-400" style="bottom: 10%;"></div>
+                                    <div class="absolute w-full h-0.5 bg-slate-400" style="bottom: 45%;"></div>
+                                    <div class="absolute w-full h-0.5 bg-slate-400" style="bottom: 65%;"></div>
+                                    <p class="text-xs text-slate-500 absolute -right-8" style="bottom: 65%;">離散的な<br>エネルギー準位</p>
+                                </div>
+                            </div>
+                             <div>
+                                <h4 class="font-semibold mb-2">人工原子 (回路)</h4>
+                                <div class="relative w-24 h-32 bg-white p-2 border">
+                                    <div class="absolute w-full h-0.5 bg-blue-500" style="bottom: 15%;"></div>
+                                    <div class="absolute w-full h-0.5 bg-blue-500" style="bottom: 50%;"></div>
+                                    <div class="absolute w-full h-0.5 bg-blue-500" style="bottom: 70%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-center mt-2 text-slate-600">電気回路でも、原子のようにエネルギーが量子化されることを発見</p>
+                    `;
+                }
+            }
+        }
+
+        function displayDetails(eventData, itemElement) {
+            detailsTitle.textContent = eventData.title;
+            detailsYear.textContent = eventData.year;
+            detailsScientist.textContent = eventData.scientist || '';
+            detailsContent.innerHTML = eventData.content;
+            renderMathInElement(detailsContent);
+
+            renderVisualization(eventData.visualization);
+
+            if (activeItem) {
+                activeItem.classList.remove('active');
+                activeItem.querySelector('div').classList.remove('bg-blue-50', 'ring-2', 'ring-blue-200');
+            }
+            itemElement.classList.add('active');
+            itemElement.querySelector('div').classList.add('bg-blue-50', 'ring-2', 'ring-blue-200');
+            activeItem = itemElement;
+        }
+
+        timelineData.forEach(eraData => {
+            const eraSection = document.createElement('div');
+            eraSection.id = eraData.id;
+            eraSection.className = "pl-10 relative";
+            
+            const eraHeader = `
+                <div class="mb-8 ml-[-40px]">
+                    <h3 class="text-3xl font-bold text-slate-700">${eraData.eraTitle}</h3>
+                    <p class="text-slate-600 mt-2">${eraData.eraDescription}</p>
+                </div>
+            `;
+            eraSection.innerHTML = eraHeader;
+
+            if (eraData.specialContent) {
+                const specialDiv = document.createElement('div');
+                specialDiv.innerHTML = eraData.specialContent;
+                eraSection.appendChild(specialDiv);
+            }
+
+            eraData.events.forEach(event => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item relative mb-4';
+                
+                const itemContent = `
+                    <div class="cursor-pointer p-4 rounded-lg hover:bg-slate-100 transition-colors duration-200 border border-transparent hover:border-slate-200">
+                        <h4 class="font-bold text-lg text-slate-800">${event.year}</h4>
+                        <p class="text-md text-slate-600 mt-1">${event.title}</p>
+                        ${event.scientist ? `<p class="text-sm font-medium text-blue-700 mt-2">${event.scientist}</p>` : ''}
+                    </div>
+                `;
+                item.innerHTML = itemContent;
+                
+                item.addEventListener('click', () => displayDetails(event, item));
+                eraSection.appendChild(item);
+            });
+
+            timelineContainer.appendChild(eraSection);
+        });
+
+        document.querySelectorAll('.nav-link').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetElement = document.querySelector(this.getAttribute('href'));
+                window.scrollTo({
+                    top: targetElement.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        window.addEventListener('DOMContentLoaded', (event) => {
+             renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                ]
+            });
+
+            const qubitChartCtx = document.getElementById('qubitChart');
+            if (qubitChartCtx) {
+                new Chart(qubitChartCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['1999', '2010', '2019', '2023', '2025 (予測)'],
+                        datasets: [{
+                            label: '安定量子ビット数',
+                            data: [2, 5, 53, 433, 1000],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, type: 'logarithmic', title: { display: true, text: '量子ビット数 (対数スケール)' } } }, plugins: { legend: { display: true }, tooltip: { callbacks: { label: (context) => ` ${context.dataset.label}: ${context.parsed.y} qubits` } } } }
+                });
+            }
+
+            const firstItem = document.querySelector('.timeline-item');
+            if (firstItem) {
+                firstItem.click();
+            }
+        });
+    </script>
+</body>
+</html>
